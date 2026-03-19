@@ -11,6 +11,7 @@ import topologyRouter from './routes/topology';
 import metricsRouter from './routes/metrics';
 import slicesRouter from './routes/slices';
 import gnbsRouter from './routes/gnbs';
+import multusRouter from './routes/multus';
 import authRouter from './routes/auth';
 import { requireAuth } from './middleware/auth';
 import { startGnbLogWatcher } from './gnb-log-watcher';
@@ -35,6 +36,7 @@ app.use('/api/topology', requireAuth, topologyRouter);
 app.use('/api/metrics', requireAuth, metricsRouter);
 app.use('/api/slices', requireAuth, slicesRouter);
 app.use('/api/gnbs', requireAuth, gnbsRouter);
+app.use('/api/multus', requireAuth, multusRouter);
 
 // Serve frontend in production
 if (isProd) {
