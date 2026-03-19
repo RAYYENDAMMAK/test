@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bsf-svc
+  namespace: open5gs
+spec:
+  selector:
+    app: bsf
+  ports:
+    - name: sbi
+      port: 7777
+      targetPort: 7777

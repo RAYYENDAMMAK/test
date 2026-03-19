@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: udr-svc
+  namespace: open5gs
+spec:
+  selector:
+    app: udr
+  ports:
+    - name: sbi
+      port: 7777
+      targetPort: 7777

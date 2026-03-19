@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smf
+  template:
+    metadata:
+      labels:
+        app: smf
+    spec:
+      containers:
+        - name: smf
+          image: gradiant/open5gs:latest
+          command: ["open5gs-smfd", "-c", "/etc/open5gs/smf.yaml"]
+          ports:
+            - name: sbi
+              containerPort: 7777
+            - name: pfcp
+              containerPort: 8805
+              protocol: UDP
+            - name: gtpc
+              containerPort: 2123
+              protocol: UDP
+            - name: gtpu
+              containerPort: 2152
+              protocol: UDP
+            - name: metrics
+              containerPort: 9090
+          volumeMounts:
+            - name: smf-config
+              mountPath: /etc/open5gs/smf.yaml
+              subPath: smf.yaml
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      volumes:
+        - name: smf-config
+          configMap:
+            name: smf-config

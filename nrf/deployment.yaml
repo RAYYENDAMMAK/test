@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nrf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nrf
+  template:
+    metadata:
+      labels:
+        app: nrf
+    spec:
+      containers:
+        - name: nrf
+          image: gradiant/open5gs:latest
+          command: ["open5gs-nrfd", "-c", "/etc/open5gs/nrf.yaml"]
+          ports:
+            - containerPort: 7777
+          volumeMounts:
+            - name: nrf-config
+              mountPath: /etc/open5gs/nrf.yaml
+              subPath: nrf.yaml
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+      volumes:
+        - name: nrf-config
+          configMap:
+            name: nrf-config

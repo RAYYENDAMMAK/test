@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nssf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nssf
+  template:
+    metadata:
+      labels:
+        app: nssf
+    spec:
+      containers:
+        - name: nssf
+          image: gradiant/open5gs:latest
+          command: ["open5gs-nssfd", "-c", "/etc/open5gs/nssf.yaml"]
+          ports:
+            - containerPort: 7777
+          volumeMounts:
+            - name: nssf-config
+              mountPath: /etc/open5gs/nssf.yaml
+              subPath: nssf.yaml
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+      volumes:
+        - name: nssf-config
+          configMap:
+            name: nssf-config

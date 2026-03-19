@@ -1,0 +1,44 @@
+# Node
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.js.map
+*.d.ts
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Kubernetes generated / local overrides
+ui/k8s/env-patch.yaml
+mongodb/storage-patch.yaml
+
+# Build artifacts
+ui/frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs & pcaps
+*.pcap
+*.pcapng
+/tmp/
+
+# Claude internal
+.claude/

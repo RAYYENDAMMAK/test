@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: amf
+  template:
+    metadata:
+      labels:
+        app: amf
+    spec:
+      containers:
+        - name: amf
+          image: gradiant/open5gs:latest
+          command: ["open5gs-amfd", "-c", "/etc/open5gs/amf.yaml"]
+          ports:
+            - name: sbi
+              containerPort: 7777
+            - name: ngap
+              containerPort: 38412
+              protocol: SCTP
+            - name: metrics
+              containerPort: 9090
+          volumeMounts:
+            - name: amf-config
+              mountPath: /etc/open5gs/amf.yaml
+              subPath: amf.yaml
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      volumes:
+        - name: amf-config
+          configMap:
+            name: amf-config

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: amf-svc
+  namespace: open5gs
+spec:
+  selector:
+    app: amf
+  ports:
+    - name: sbi
+      port: 7777
+      targetPort: 7777
+    - name: ngap
+      port: 38412
+      targetPort: 38412
+      protocol: SCTP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+  type: LoadBalancer

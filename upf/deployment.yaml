@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: upf
+  template:
+    metadata:
+      labels:
+        app: upf
+    spec:
+      initContainers:
+        - name: upf-init
+          image: gradiant/open5gs:latest
+          command:
+            - sh
+            - -c
+            - |
+              ip tuntap add name ogstun mode tun || true
+              ip addr add 10.45.0.1/16 dev ogstun || true
+              ip link set ogstun up
+              sysctl -w net.ipv4.ip_forward=1
+              iptables -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE || true
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+          volumeMounts:
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+      containers:
+        - name: upf
+          image: gradiant/open5gs:latest
+          command: ["open5gs-upfd", "-c", "/etc/open5gs/upf.yaml"]
+          ports:
+            - name: pfcp
+              containerPort: 8805
+              protocol: UDP
+            - name: gtpu
+              containerPort: 2152
+              protocol: UDP
+            - name: metrics
+              containerPort: 9090
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+          volumeMounts:
+            - name: upf-config
+              mountPath: /etc/open5gs/upf.yaml
+              subPath: upf.yaml
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      volumes:
+        - name: upf-config
+          configMap:
+            name: upf-config
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice

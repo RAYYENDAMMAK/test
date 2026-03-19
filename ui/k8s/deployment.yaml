@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-ui
+  namespace: open5gs
+  labels:
+    app: core-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core-ui
+  template:
+    metadata:
+      labels:
+        app: core-ui
+    spec:
+      serviceAccountName: core-ui
+      containers:
+        - name: core-ui
+          image: core-ui:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: NODE_ENV
+              value: production
+            - name: K8S_NAMESPACE
+              value: open5gs
+            - name: MONGO_URI
+              value: mongodb://mongodb-svc:27017/open5gs
+            - name: PROMETHEUS_URL
+              value: http://prometheus-svc:9090
+            - name: GRAFANA_URL
+              value: http://grafana-svc:3000
+            - name: PCAP_DIR
+              value: /tmp/pcaps
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: pcap-storage
+              mountPath: /tmp/pcaps
+      volumes:
+        - name: pcap-storage
+          emptyDir:
+            sizeLimit: 2Gi

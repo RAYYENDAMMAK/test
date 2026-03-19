@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ausf
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ausf
+  template:
+    metadata:
+      labels:
+        app: ausf
+    spec:
+      containers:
+        - name: ausf
+          image: gradiant/open5gs:latest
+          command: ["open5gs-ausfd", "-c", "/etc/open5gs/ausf.yaml"]
+          ports:
+            - containerPort: 7777
+          volumeMounts:
+            - name: ausf-config
+              mountPath: /etc/open5gs/ausf.yaml
+              subPath: ausf.yaml
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+      volumes:
+        - name: ausf-config
+          configMap:
+            name: ausf-config
