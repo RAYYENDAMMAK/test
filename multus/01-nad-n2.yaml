@@ -1,0 +1,41 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  NetworkAttachmentDefinition — N2 Interface (NGAP)
+#
+#  Used by: AMF
+#  Protocol: SCTP / port 38412
+#  Purpose:  AMF ↔ gNB control plane (NG Setup, UE registration, handover)
+#
+#  ⚠ Set "master" to the physical interface facing your RAN/gNBs.
+#    Common values: eth1, ens4, enp4s0, bond0.2 (VLAN)
+#    Check on host: ip link show
+#
+#  AMF will be assigned: 192.168.10.10/24 on this interface (net1 inside pod)
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: nad-n2
+  namespace: open5gs
+  annotations:
+    k8s.v1.cni.cncf.io/resourceName: ""
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name":       "nad-n2",
+      "type":       "macvlan",
+      "master":     "eth1",
+      "mode":       "bridge",
+      "ipam": {
+        "type":    "static",
+        "addresses": [
+          {
+            "address": "192.168.10.10/24",
+            "gateway": "192.168.10.1"
+          }
+        ],
+        "routes": [
+          { "dst": "192.168.10.0/24" }
+        ]
+      }
+    }

@@ -12,6 +12,31 @@ spec:
     metadata:
       labels:
         app: upf
+      annotations:
+        # ── Multus interfaces (N3, N4, N6) ───────────────────────────────────
+        # net1 (N3): macvlan on RAN NIC — GTP-U tunnels from gNBs / UDP 2152
+        # net2 (N4): ipvlan on mgmt NIC — PFCP from SMF / UDP 8805
+        # net3 (N6): macvlan on DN NIC  — UE traffic breakout to internet
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name":      "nad-n3",
+              "namespace": "open5gs",
+              "interface": "net1",
+              "ips":       ["192.168.20.10/24"]
+            },
+            {
+              "name":      "nad-n4",
+              "namespace": "open5gs",
+              "interface": "net2"
+            },
+            {
+              "name":      "nad-n6",
+              "namespace": "open5gs",
+              "interface": "net3",
+              "ips":       ["192.168.40.10/24"]
+            }
+          ]
     spec:
       initContainers:
         - name: upf-init

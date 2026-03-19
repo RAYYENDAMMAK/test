@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  NetworkAttachmentDefinition — N3 Interface (GTP-U)
+#
+#  Used by: UPF
+#  Protocol: UDP / port 2152
+#  Purpose:  UPF ↔ gNB user plane (GTP-U tunnels carrying UE traffic)
+#
+#  ⚠ Set "master" to the physical interface facing your RAN/gNBs.
+#    Can be the same physical interface as N2 (eth1) if both RAN control
+#    and user plane share one link — or a dedicated interface.
+#
+#  UPF N3 will be assigned: 192.168.20.10/24 on this interface (net1 inside pod)
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: nad-n3
+  namespace: open5gs
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name":       "nad-n3",
+      "type":       "macvlan",
+      "master":     "eth1",
+      "mode":       "bridge",
+      "ipam": {
+        "type":    "static",
+        "addresses": [
+          {
+            "address": "192.168.20.10/24",
+            "gateway": "192.168.20.1"
+          }
+        ],
+        "routes": [
+          { "dst": "192.168.20.0/24" }
+        ]
+      }
+    }

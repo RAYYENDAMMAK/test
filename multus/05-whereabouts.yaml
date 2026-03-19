@@ -1,0 +1,134 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Whereabouts IPAM — dynamic IP allocation for Multus interfaces
+#  Used by nad-n4 to assign PFCP addresses to SMF and UPF pods
+# ─────────────────────────────────────────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: whereabouts
+  namespace: kube-system
+  labels:
+    app: whereabouts
+spec:
+  selector:
+    matchLabels:
+      app: whereabouts
+  template:
+    metadata:
+      labels:
+        app: whereabouts
+    spec:
+      hostNetwork: true
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+      serviceAccountName: whereabouts
+      containers:
+        - name: whereabouts
+          image: ghcr.io/k8snetworkplumbingwg/whereabouts:v0.7.0
+          command: ["/bin/whereabouts"]
+          args:
+            - "--reconciler-period=30s"
+          resources:
+            requests: { cpu: 100m, memory: 50Mi }
+            limits:   { cpu: 100m, memory: 50Mi }
+          env:
+            - name: WHEREABOUTS_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: cni-bin
+              mountPath: /host/opt/cni/bin
+            - name: cni-conf
+              mountPath: /host/etc/cni/net.d
+      initContainers:
+        - name: install-whereabouts
+          image: ghcr.io/k8snetworkplumbingwg/whereabouts:v0.7.0
+          command: ["/bin/sh", "-c"]
+          args:
+            - cp /bin/whereabouts /host/opt/cni/bin/whereabouts
+          volumeMounts:
+            - name: cni-bin
+              mountPath: /host/opt/cni/bin
+      volumes:
+        - name: cni-bin
+          hostPath:
+            path: /var/lib/rancher/k3s/data/current/bin
+        - name: cni-conf
+          hostPath:
+            path: /var/lib/rancher/k3s/agent/etc/cni/net.d
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: whereabouts
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: whereabouts
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: whereabouts
+subjects:
+  - kind: ServiceAccount
+    name: whereabouts
+    namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: whereabouts
+rules:
+  - apiGroups: ["whereabouts.cni.cncf.io"]
+    resources: ["ippools", "overlappingrangeipreservations"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["k8s.cni.cncf.io"]
+    resources: ["network-attachment-definitions"]
+    verbs: ["get", "list", "watch"]
+---
+# IPPool CRD for whereabouts
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ippools.whereabouts.cni.cncf.io
+spec:
+  group: whereabouts.cni.cncf.io
+  scope: Namespaced
+  names:
+    plural: ippools
+    singular: ippool
+    kind: IPPool
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                range:
+                  type: string
+                allocations:
+                  type: object
+                  additionalProperties:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      podref:
+                        type: string

@@ -12,6 +12,16 @@ spec:
     metadata:
       labels:
         app: smf
+      annotations:
+        # ── Multus N4 interface (PFCP) ────────────────────────────────────────
+        # net1: ipvlan on management NIC — PFCP session control to UPF/8805
+        # IP dynamically assigned by whereabouts from 192.168.30.10-30 range
+        k8s.v1.cni.cncf.io/networks: |
+          [{
+            "name":      "nad-n4",
+            "namespace": "open5gs",
+            "interface": "net1"
+          }]
     spec:
       containers:
         - name: smf

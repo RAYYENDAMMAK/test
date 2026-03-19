@@ -12,6 +12,16 @@ spec:
     metadata:
       labels:
         app: amf
+      annotations:
+        # ── Multus N2 interface (NGAP) ────────────────────────────────────────
+        # net1: macvlan on RAN-facing NIC — gNBs connect here via SCTP/38412
+        k8s.v1.cni.cncf.io/networks: |
+          [{
+            "name":      "nad-n2",
+            "namespace": "open5gs",
+            "interface": "net1",
+            "ips":       ["192.168.10.10/24"]
+          }]
     spec:
       containers:
         - name: amf

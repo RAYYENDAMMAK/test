@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  NetworkAttachmentDefinition — N6 Interface (Data Network)
+#
+#  Used by: UPF
+#  Protocol: IP (routed)
+#  Purpose:  UPF ↔ Data Network / Internet (UE traffic breakout)
+#            UE packets are de-encapsulated from GTP and forwarded here.
+#
+#  ⚠ Set "master" to the physical interface facing your upstream router
+#    or internet gateway. Common: eth2, ens5, bond1
+#
+#  UPF N6 will be assigned: 192.168.40.10/24 on this interface (net3 inside pod)
+#
+#  If your DN is the same network as your management (single NIC testbed),
+#  you can point master to eth0 and adjust the subnet accordingly.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: nad-n6
+  namespace: open5gs
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name":       "nad-n6",
+      "type":       "macvlan",
+      "master":     "eth2",
+      "mode":       "bridge",
+      "ipam": {
+        "type":    "static",
+        "addresses": [
+          {
+            "address": "192.168.40.10/24",
+            "gateway": "192.168.40.1"
+          }
+        ],
+        "routes": [
+          { "dst": "0.0.0.0/0", "gw": "192.168.40.1" }
+        ]
+      }
+    }
