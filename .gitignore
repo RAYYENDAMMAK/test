@@ -1,5 +1,13 @@
+# License private key — NEVER commit
+scripts/license-private.pem
+
+# Local license files
+license.jwt
+*.jwt
+
 # Node
 node_modules/
+ui/backend/dist/
 dist/
 build/
 *.log
@@ -24,6 +32,8 @@ mongodb/storage-patch.yaml
 
 # Build artifacts
 ui/frontend/dist/
+*.tar.gz
+*.zip
 
 # OS
 .DS_Store
