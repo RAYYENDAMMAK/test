@@ -2243,6 +2243,39 @@ function netRenderNads() {
 }
 
 // ── NAD edit modal ────────────────────────────────────────────────────────────
+// NAD → NF Config field linkage map
+// Defines which NF Config fields must match each NAD's assigned IP
+const NAD_NFC_LINKS = {
+  'nad-n2': [
+    { nfId:'amf', fieldKey:'ngap_addr', label:'AMF → NGAP Bind Address',   hint:'AMF listens for gNB SCTP on this IP' },
+  ],
+  'nad-n3': [
+    { nfId:'upf', fieldKey:'gtpu_addr', label:'UPF → GTP-U Address (N3)',  hint:'UPF receives GTP-U tunnels from gNBs on this IP' },
+  ],
+  'nad-n4': [
+    { nfId:'smf', fieldKey:'pfcp_addr', label:'SMF → PFCP Address (N4)',   hint:'SMF sends PFCP session requests from this IP' },
+    { nfId:'upf', fieldKey:'pfcp_addr', label:'UPF → PFCP Address (N4)',   hint:'UPF listens for PFCP from SMF on this IP' },
+  ],
+  'nad-n6': [], // N6 is a routed DN interface — UPF forwards packets, no bind addr needed
+};
+
+/** Extract bare IP from CIDR string: "192.168.10.10/24" → "192.168.10.10" */
+function netStripCidr(cidr='') { return cidr.split('/')[0]; }
+
+/** Resolve the IP that will be set for a given NAD + NF (used for whereabouts preview) */
+function netResolvedIp(nad, nfId) {
+  if (nad.ipamType === 'static') return netStripCidr(nad.addresses?.[0] || '');
+  // whereabouts: SMF gets rangeStart, UPF gets rangeStart+1
+  if (nad.ipamType === 'whereabouts') {
+    const parts = (nad.rangeStart || '').split('.');
+    if (parts.length === 4) {
+      const last = parseInt(parts[3]) + (nfId === 'upf' ? 1 : 0);
+      return `${parts[0]}.${parts[1]}.${parts[2]}.${last}`;
+    }
+  }
+  return '(dynamic)';
+}
+
 function netOpenEdit(name) {
   const nad = NET_NADS.find(n => n.name === name);
   if (!nad) return;
@@ -2251,26 +2284,65 @@ function netOpenEdit(name) {
   const isStatic      = nad.ipamType === 'static';
   const isWhereabouts = nad.ipamType === 'whereabouts';
   const INP = 'width:100%;background:#030712;border:1px solid #374151;border-radius:7px;padding:8px 10px;color:#e5e7eb;font-size:12px;font-family:monospace;outline:none;';
+
+  // Build linked NF config rows
+  const links = NAD_NFC_LINKS[name] || [];
+  const linkRows = links.map(lnk => {
+    const currentVal = getNFCFields(lnk.nfId)?.[lnk.fieldKey] || '0.0.0.0';
+    const newIp      = netResolvedIp(nad, lnk.nfId);
+    const isDynamic  = newIp === '(dynamic)';
+    const needsSync  = currentVal !== newIp && !isDynamic;
+    return `
+    <div style="display:grid;grid-template-columns:1fr 24px 1fr;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;background:#0d1117;border:1px solid ${needsSync?'rgba(239,68,68,.3)':'#1f2937'};">
+      <div>
+        <div style="font-size:10px;color:#4b5563;margin-bottom:2px;">${lnk.label}</div>
+        <div style="font-family:monospace;font-size:11px;color:${needsSync?'#ef4444':'#9ca3af'};">${currentVal}</div>
+      </div>
+      <div style="text-align:center;font-size:14px;color:#374151;">→</div>
+      <div>
+        <div style="font-size:10px;color:#4b5563;margin-bottom:2px;">Will be set to</div>
+        <div style="font-family:monospace;font-size:11px;color:${isDynamic?'#f59e0b':'#34d399'};">${newIp}${isDynamic?' (assigned at pod start)':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const syncSection = links.length ? `
+    <div style="border-top:1px solid #1f2937;padding-top:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:600;color:#9ca3af;">Linked NF Config Fields</div>
+        ${isStatic && links.length ? `
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#9ca3af;">
+          <input type="checkbox" id="netSyncNfc" checked style="accent-color:#3b82f6;" />
+          Auto-sync NF Config
+        </label>` : `<span style="font-size:10px;color:#4b5563;">N4 IPs are dynamic — sync after pod starts</span>`}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">${linkRows}</div>
+      ${links.length ? `<p style="font-size:10px;color:#374151;margin:8px 0 0;">
+        These NF Config fields must match the NAD IP so Open5GS binds to the correct interface.
+        <span style="color:#60a5fa;cursor:pointer;" onclick="netCloseModal();showTab('nfconfig');">→ Open NF Config</span>
+      </p>` : ''}
+    </div>` : '';
+
   document.getElementById('netModalBody').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:14px;">
       <div>
         <label style="display:block;font-size:11px;color:#9ca3af;margin-bottom:6px;">Host NIC (master interface)</label>
-        <input id="netEditMaster" type="text" value="${nad.master||''}" placeholder="e.g. enp3s0, eth1, bond0.100"
-          style="${INP}" />
+        <input id="netEditMaster" type="text" value="${nad.master||''}" placeholder="e.g. enp3s0, eth1, bond0.100" style="${INP}" />
         <p style="font-size:10px;color:#374151;margin:4px 0 0;">
-          Run <code style="background:#111;padding:1px 4px;border-radius:3px;">ip link show</code> on the k3s host to find interface names.
+          Run <code style="background:#111;padding:1px 4px;border-radius:3px;">ip link show</code> on the k3s host to list interfaces.
         </p>
       </div>
       ${isStatic ? `
-      <div>
-        <label style="display:block;font-size:11px;color:#9ca3af;margin-bottom:6px;">IP Address / CIDR</label>
-        <input id="netEditAddr" type="text" value="${nad.addresses?.[0]||''}" placeholder="192.168.10.10/24"
-          style="${INP}" />
-      </div>
-      <div>
-        <label style="display:block;font-size:11px;color:#9ca3af;margin-bottom:6px;">Gateway</label>
-        <input id="netEditGw" type="text" value="" placeholder="192.168.10.1 (optional)"
-          style="${INP}" />
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
+        <div>
+          <label style="display:block;font-size:11px;color:#9ca3af;margin-bottom:6px;">IP Address / CIDR</label>
+          <input id="netEditAddr" type="text" value="${nad.addresses?.[0]||''}" placeholder="192.168.10.10/24" style="${INP}"
+            oninput="netPreviewSync()" />
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:#9ca3af;margin-bottom:6px;">Gateway</label>
+          <input id="netEditGw" type="text" value="" placeholder="192.168.10.1" style="${INP}" />
+        </div>
       </div>` : ''}
       ${isWhereabouts ? `
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
@@ -2287,13 +2359,15 @@ function netOpenEdit(name) {
           <input id="netEditRangeEnd" type="text" value="${nad.rangeEnd||''}" placeholder="192.168.30.30" style="${INP}" />
         </div>
       </div>` : ''}
+      ${syncSection}
       <div style="padding:12px;border-radius:8px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);">
         <div style="font-size:11px;color:#f59e0b;font-weight:600;margin-bottom:4px;">⚠ After saving</div>
-        <div style="font-size:11px;color:#78716c;">The NAD is patched immediately in Kubernetes. Restart the affected NF pod(s) for the new interface to take effect: <code style="background:#111;padding:1px 4px;border-radius:3px;">${(nad.nfs||[]).map(n=>`kubectl rollout restart deploy/${n} -n open5gs`).join(', ')}</code></div>
+        <div style="font-size:11px;color:#78716c;">Restart affected pods:
+          ${(nad.nfs||[]).map(n=>`<code style="background:#111;padding:1px 4px;border-radius:3px;margin-left:4px;">kubectl rollout restart deploy/${n} -n open5gs</code>`).join('')}
+        </div>
       </div>
     </div>`;
-  const modal = document.getElementById('netEditModal');
-  modal.style.display = 'flex';
+  document.getElementById('netEditModal').style.display = 'flex';
 }
 
 function netCloseModal() {
@@ -2304,11 +2378,9 @@ function netCloseModal() {
 async function netSaveNad() {
   if (!NET_EDITING) return;
   const nad = NET_NADS.find(n => n.name === NET_EDITING);
-  const body = {
-    master: document.getElementById('netEditMaster')?.value || nad.master,
-  };
-  const addrEl = document.getElementById('netEditAddr');
-  const gwEl   = document.getElementById('netEditGw');
+  const body = { master: document.getElementById('netEditMaster')?.value || nad.master };
+  const addrEl  = document.getElementById('netEditAddr');
+  const gwEl    = document.getElementById('netEditGw');
   const rangeEl = document.getElementById('netEditRange');
   const rsEl    = document.getElementById('netEditRangeStart');
   const reEl    = document.getElementById('netEditRangeEnd');
@@ -2318,25 +2390,72 @@ async function netSaveNad() {
   if (rsEl)    body.rangeStart = rsEl.value;
   if (reEl)    body.rangeEnd   = reEl.value;
 
+  // ── Sync NF Config fields if checkbox is checked ──────────────────────────
+  const shouldSync = document.getElementById('netSyncNfc')?.checked ?? false;
+  const links      = NAD_NFC_LINKS[NET_EDITING] || [];
+  const synced     = [];
+  if (shouldSync && links.length) {
+    // Rebuild nad object with new address for IP resolution
+    const updatedNad = { ...nad, addresses: [body.address || nad.addresses?.[0] || ''] };
+    links.forEach(lnk => {
+      const newIp = netResolvedIp(updatedNad, lnk.nfId);
+      if (newIp && newIp !== '(dynamic)') {
+        const fields = getNFCFields(lnk.nfId);
+        if (fields) {
+          fields[lnk.fieldKey] = newIp;
+          // Also persist into NFC_FIELDS cache so YAML reflects it
+          if (!NFC_FIELDS[lnk.nfId]) NFC_FIELDS[lnk.nfId] = {};
+          NFC_FIELDS[lnk.nfId][lnk.fieldKey] = newIp;
+          synced.push(`${lnk.nfId.toUpperCase()} ${lnk.fieldKey} → ${newIp}`);
+        }
+      }
+    });
+  }
+
+  // ── Patch NAD via API (falls back gracefully in demo) ─────────────────────
   try {
     const r = await fetch(`${API}/multus/nads/${NET_EDITING}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
+    const idx = NET_NADS.findIndex(n => n.name === NET_EDITING);
     if (r.ok) {
       const updated = await r.json();
-      const idx = NET_NADS.findIndex(n => n.name === NET_EDITING);
       if (idx >= 0) NET_NADS[idx] = updated.nad;
     } else {
-      // Demo fallback: update local mock
-      const idx = NET_NADS.findIndex(n => n.name === NET_EDITING);
-      if (idx >= 0) { NET_NADS[idx] = { ...NET_NADS[idx], ...body }; }
+      if (idx >= 0) NET_NADS[idx] = { ...NET_NADS[idx], ...body,
+        addresses: body.address ? [body.address] : nad.addresses };
     }
   } catch {
     const idx = NET_NADS.findIndex(n => n.name === NET_EDITING);
-    if (idx >= 0) NET_NADS[idx] = { ...NET_NADS[idx], master: body.master };
+    if (idx >= 0) NET_NADS[idx] = { ...NET_NADS[idx], master: body.master,
+      addresses: body.address ? [body.address] : nad.addresses };
   }
+
   netCloseModal();
   netRenderNads();
+
+  // ── Toast notification ────────────────────────────────────────────────────
+  if (synced.length) {
+    netToast(`NAD saved · NF Config synced: ${synced.join(', ')}`, 'success');
+  } else {
+    netToast('NAD saved', 'success');
+  }
+}
+
+function netToast(msg, type='success') {
+  const existing = document.getElementById('netToast');
+  if (existing) existing.remove();
+  const color = type === 'success' ? '#34d399' : '#ef4444';
+  const bg    = type === 'success' ? 'rgba(52,211,153,.1)' : 'rgba(239,68,68,.1)';
+  const t = document.createElement('div');
+  t.id = 'netToast';
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:999;padding:12px 18px;border-radius:10px;
+    background:${bg};border:1px solid ${color}44;color:${color};font-size:12px;max-width:420px;
+    display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.4);`;
+  t.innerHTML = `<span>✓</span><span>${msg}</span>
+    <span style="cursor:pointer;color:#4b5563;margin-left:8px;" onclick="this.parentElement.remove()">✕</span>`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 5000);
 }
 
 // ── Pod interface status ──────────────────────────────────────────────────────
