@@ -15,7 +15,7 @@ import multusRouter from './routes/multus';
 import authRouter from './routes/auth';
 import { requireAuth } from './middleware/auth';
 import { startGnbLogWatcher } from './gnb-log-watcher';
-import { validateLicense } from './license';
+// import { validateLicense } from './license'; // LICENSE: disabled — re-enable when licensing is needed
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -27,13 +27,12 @@ app.use(express.json({ limit: '10mb' }));
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
-// License status — no auth required so the UI can show it on the login page
-app.get('/api/license', async (req, res) => {
-  const info = await validateLicense();
-  // Don't expose cluster_id to client
-  const { cluster_id, ...safe } = info;
-  res.json(safe);
-});
+// LICENSE: disabled — uncomment when licensing is needed
+// app.get('/api/license', async (req, res) => {
+//   const info = await validateLicense();
+//   const { cluster_id, ...safe } = info;
+//   res.json(safe);
+// });
 
 // API Routes
 app.use('/api/auth', authRouter);
@@ -67,13 +66,13 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 async function main() {
   await connectMongo();
 
-  // Validate license on startup
-  const license = await validateLicense(true);
-  if (!license.valid) {
-    console.error(`[license] ✗ ${license.error}`);
-    console.error('[license] Place a valid license.jwt at /etc/ieee5g/license.jwt');
-    console.error('[license] Starting in UNLICENSED mode — API access will be blocked');
-  }
+  // LICENSE: disabled — uncomment when licensing is needed
+  // const license = await validateLicense(true);
+  // if (!license.valid) {
+  //   console.error(`[license] ✗ ${license.error}`);
+  //   console.error('[license] Place a valid license.jwt at /etc/ieee5g/license.jwt');
+  //   console.error('[license] Starting in UNLICENSED mode — API access will be blocked');
+  // }
 
   // Start gNB log watcher in background (does not block startup)
   startGnbLogWatcher().catch(err =>

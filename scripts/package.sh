@@ -38,30 +38,26 @@ error() { echo -e "\${RED}[✗]\${NC} \$1"; exit 1; }
 REPO_URL="${REPO_URL}"
 BRANCH="${BRANCH}"
 INSTALL_DIR="\${INSTALL_DIR:-/opt/ieee_5g_core}"
-LICENSE_DEST="/etc/ieee5g/license.jwt"
+# LICENSE_DEST="/etc/ieee5g/license.jwt"  # LICENSE: disabled — re-enable when licensing is needed
 
 echo ""
 echo "  IEEE 5G Core Testbed — Deployment Bootstrap"
 echo "  ─────────────────────────────────────────────"
 echo ""
 
-# 1. Locate license file
-LICENSE_SRC="\${1:-}"
-if [[ -z "\$LICENSE_SRC" ]]; then
-  read -rp "  Path to license.jwt: " LICENSE_SRC
-fi
-[[ -f "\$LICENSE_SRC" ]] || error "License file not found: \$LICENSE_SRC"
+# LICENSE: disabled — re-enable when licensing is needed
+# LICENSE_SRC="\${1:-}"
+# if [[ -z "\$LICENSE_SRC" ]]; then
+#   read -rp "  Path to license.jwt: " LICENSE_SRC
+# fi
+# [[ -f "\$LICENSE_SRC" ]] || error "License file not found: \$LICENSE_SRC"
 
-# 2. Check prerequisites
+# 1. Check prerequisites
 for cmd in git curl kubectl; do
   command -v "\$cmd" &>/dev/null || error "\$cmd is required but not installed."
 done
 
-# 3. Print cluster UID (for license verification info)
-CLUSTER_UID=\$(kubectl get namespace kube-system -o jsonpath='{.metadata.uid}' 2>/dev/null || echo "unknown")
-info "Cluster UID: \$CLUSTER_UID"
-
-# 4. Clone or update repo
+# 2. Clone or update repo
 if [[ -d "\$INSTALL_DIR/.git" ]]; then
   info "Updating existing repo at \$INSTALL_DIR..."
   git -C "\$INSTALL_DIR" fetch origin
@@ -74,22 +70,22 @@ else
   git clone --branch "\$BRANCH" "\$REPO_URL" "\$INSTALL_DIR"
 fi
 
-# 5. Install system dependencies (k3s, tools)
+# 3. Install system dependencies (k3s, tools)
 info "Running system installer..."
 bash "\$INSTALL_DIR/install.sh"
 
-# 6. Install license file
-info "Installing license..."
-sudo mkdir -p /etc/ieee5g
-sudo cp "\$LICENSE_SRC" "\$LICENSE_DEST"
-sudo chmod 600 "\$LICENSE_DEST"
-info "License installed at \$LICENSE_DEST"
+# LICENSE: disabled — re-enable when licensing is needed
+# info "Installing license..."
+# sudo mkdir -p /etc/ieee5g
+# sudo cp "\$LICENSE_SRC" "\$LICENSE_DEST"
+# sudo chmod 600 "\$LICENSE_DEST"
+# info "License installed at \$LICENSE_DEST"
 
-# 7. Deploy to Kubernetes
+# 4. Deploy to Kubernetes
 info "Deploying 5G Core to Kubernetes..."
 kubectl apply -k "\$INSTALL_DIR"
 
-# 8. Wait for rollout
+# 5. Wait for rollout
 info "Waiting for core NFs to be ready..."
 for deploy in nrf ausf udm udr pcf amf smf upf; do
   kubectl rollout status deployment/\$deploy -n open5gs --timeout=120s || \
@@ -101,9 +97,6 @@ info "Deployment complete!"
 echo ""
 echo "  Dashboard:  kubectl port-forward svc/core-ui-svc 8080:80 -n open5gs"
 echo "              http://localhost:8080  (admin / admin123)"
-echo ""
-echo "  Cluster UID for license request:"
-echo "    kubectl get ns kube-system -o jsonpath='{.metadata.uid}'"
 echo ""
 BOOTSTRAP
 chmod +x "$PKG_DIR/bootstrap.sh"
@@ -120,26 +113,19 @@ REQUIREMENTS
   - Ubuntu 22.04 / 24.04 LTS (fresh install recommended)
   - 4 vCPU, 8 GB RAM minimum
   - Internet access (to pull from GitHub and container registries)
-  - A valid license.jwt (contact ieee-testbed to obtain one)
-
-GETTING YOUR LICENSE
-  1. Get your cluster UID AFTER k3s is installed:
-       kubectl get ns kube-system -o jsonpath='{.metadata.uid}'
-  2. Send it to ieee-testbed to receive your license.jwt
 
 INSTALLATION
-  bash bootstrap.sh /path/to/license.jwt
+  bash bootstrap.sh
 
   Or with a custom install directory:
-  INSTALL_DIR=/opt/my5gcore bash bootstrap.sh license.jwt
+  INSTALL_DIR=/opt/my5gcore bash bootstrap.sh
 
 WHAT BOOTSTRAP DOES
   1. Checks prerequisites (git, curl, kubectl)
   2. Clones ${REPO_URL} (branch: ${BRANCH})
   3. Runs install.sh  — installs k3s + system dependencies
-  4. Installs license.jwt → /etc/ieee5g/license.jwt
-  5. Deploys all 5G Core NFs via kubectl apply -k
-  6. Waits for NRF / AUSF / UDM / UDR / PCF / AMF / SMF / UPF to be ready
+  4. Deploys all 5G Core NFs via kubectl apply -k
+  5. Waits for NRF / AUSF / UDM / UDR / PCF / AMF / SMF / UPF to be ready
 
 AFTER INSTALLATION
   kubectl get pods -n open5gs           # check all pods running
@@ -162,4 +148,4 @@ echo "  Contains only:"
 echo "    bootstrap.sh  — pulls repo from Git, runs install, deploys"
 echo "    README.txt    — installation instructions"
 echo ""
-echo "  To distribute: send this tarball + a license.jwt to each site"
+echo "  To distribute: send this tarball to each site"

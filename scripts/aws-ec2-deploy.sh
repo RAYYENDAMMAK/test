@@ -9,7 +9,6 @@
 #  Prerequisites:
 #    - AWS CLI v2 installed and configured (aws configure)
 #    - An existing EC2 Key Pair in the target region
-#    - A valid license.jwt (supply via LICENSE_FILE or S3 URI)
 #
 #  Usage:
 #    chmod +x scripts/aws-ec2-deploy.sh
@@ -19,8 +18,6 @@
 #    AWS_REGION       AWS region            (default: eu-west-3 / Paris)
 #    INSTANCE_TYPE    EC2 instance type     (default: c5.xlarge)
 #    KEY_NAME         EC2 key pair name     (required)
-#    LICENSE_FILE     Path to license.jwt   (required, or set LICENSE_S3_URI)
-#    LICENSE_S3_URI   S3 URI to license     (e.g. s3://my-bucket/license.jwt)
 #    VPC_ID           Existing VPC ID       (default: default VPC)
 #    SUBNET_ID        Subnet for instance   (default: first available)
 #    MULTUS_ENIs      Attach extra ENIs     (default: true)
@@ -43,8 +40,6 @@ step()    { echo -e "\n${BOLD}▶ $*${NC}"; }
 AWS_REGION="${AWS_REGION:-eu-west-3}"
 INSTANCE_TYPE="${INSTANCE_TYPE:-c5.xlarge}"
 KEY_NAME="${KEY_NAME:-}"
-LICENSE_FILE="${LICENSE_FILE:-}"
-LICENSE_S3_URI="${LICENSE_S3_URI:-}"
 VPC_ID="${VPC_ID:-}"
 SUBNET_ID="${SUBNET_ID:-}"
 MULTUS_ENIs="${MULTUS_ENIs:-true}"
@@ -76,14 +71,6 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 info "AWS Account: $ACCOUNT_ID  Region: $AWS_REGION"
 
 [[ -z "$KEY_NAME" ]] && error "KEY_NAME is required. Set: export KEY_NAME=your-ec2-keypair"
-
-# License: must be local file or S3 URI
-if [[ -z "$LICENSE_FILE" && -z "$LICENSE_S3_URI" ]]; then
-  error "Provide LICENSE_FILE=/path/to/license.jwt or LICENSE_S3_URI=s3://bucket/license.jwt"
-fi
-if [[ -n "$LICENSE_FILE" && ! -f "$LICENSE_FILE" ]]; then
-  error "License file not found: $LICENSE_FILE"
-fi
 
 # ── Instance type recommendation ─────────────────────────────────────────────
 step "Instance type check"
@@ -199,16 +186,8 @@ aws ec2 authorize-security-group-ingress --region "$AWS_REGION" --group-id "$SG_
 
 success "Security Group configured with all 5G ports"
 
-# ── Encode license into user-data ─────────────────────────────────────────────
-step "Preparing user-data with license"
-
-if [[ -n "$LICENSE_FILE" ]]; then
-  LICENSE_B64=$(base64 -w0 "$LICENSE_FILE")
-  LICENSE_INJECT="echo '$LICENSE_B64' | base64 -d > /etc/ieee5g/license.jwt"
-else
-  # Pull from S3 at boot time (instance needs IAM role with s3:GetObject)
-  LICENSE_INJECT="aws s3 cp '$LICENSE_S3_URI' /etc/ieee5g/license.jwt --region $AWS_REGION"
-fi
+# ── Build user-data ───────────────────────────────────────────────────────────
+step "Preparing user-data"
 
 USERDATA=$(cat <<USERDATA
 #!/bin/bash
@@ -219,26 +198,15 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 hostnamectl set-hostname ieee-5g-core
 apt-get update -qq
-apt-get install -y -qq git curl wget jq unzip awscli
-
-# ── Install license ───────────────────────────────────────────────────────────
-mkdir -p /etc/ieee5g
-chmod 700 /etc/ieee5g
-${LICENSE_INJECT}
-chmod 600 /etc/ieee5g/license.jwt
-
-# ── AWS-specific: patch Multus NADs to use ipvlan (macvlan not supported on EC2 ENIs) ──
-AWS_MULTUS_PATCH="true"
+apt-get install -y -qq git curl wget jq unzip
 
 # ── Clone repo ────────────────────────────────────────────────────────────────
 git clone --branch ${BRANCH} ${REPO_URL} /opt/ieee_5g_core
 cd /opt/ieee_5g_core
 
-# ── Patch Multus NADs for AWS (macvlan → ipvlan, master eth1/eth2) ───────────
-if [[ "\$AWS_MULTUS_PATCH" == "true" ]]; then
-  sed -i 's/"type": *"macvlan"/"type": "ipvlan"/g' multus/01-nad-n2.yaml multus/02-nad-n3.yaml multus/04-nad-n6.yaml
-  sed -i 's/"mode": *"bridge"/"mode": "l2"/g'       multus/01-nad-n2.yaml multus/02-nad-n3.yaml multus/04-nad-n6.yaml
-fi
+# ── AWS-specific: patch Multus NADs to use ipvlan (macvlan not supported on EC2 ENIs) ──
+sed -i 's/"type": *"macvlan"/"type": "ipvlan"/g' multus/01-nad-n2.yaml multus/02-nad-n3.yaml multus/04-nad-n6.yaml
+sed -i 's/"mode": *"bridge"/"mode": "l2"/g'       multus/01-nad-n2.yaml multus/02-nad-n3.yaml multus/04-nad-n6.yaml
 
 # ── Slim mode: disable Grafana + Prometheus to save RAM ──────────────────────
 SLIM_MODE="${SLIM_MODE}"
@@ -249,7 +217,7 @@ if [[ "\$SLIM_MODE" == "true" ]]; then
 fi
 
 # ── Run installer ─────────────────────────────────────────────────────────────
-LICENSE_FILE=/etc/ieee5g/license.jwt bash /opt/ieee_5g_core/install.sh
+bash /opt/ieee_5g_core/install.sh
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
