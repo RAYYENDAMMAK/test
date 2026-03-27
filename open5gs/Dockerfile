@@ -4,11 +4,11 @@
 # Builds: open5gs:local
 # Usage:  command: ["open5gs-amfd", "-c", "/etc/open5gs/amf.yaml"]
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Open5GS from the official PPA (Ubuntu 22.04 / jammy)
+# Install Open5GS from the official PPA (Ubuntu 24.04 / noble)
 RUN apt-get update -qq && \
     apt-get install -y -qq \
         software-properties-common \
@@ -16,7 +16,7 @@ RUN apt-get update -qq && \
         iproute2 iptables iputils-ping net-tools && \
     add-apt-repository -y ppa:open5gs/latest && \
     apt-get update -qq && \
-    apt-get install -y -qq open5gs && \
+    apt-get install -y -qq --no-install-recommends open5gs && \
     rm -rf /var/lib/apt/lists/*
 
 # Verify all expected NF binaries are present
