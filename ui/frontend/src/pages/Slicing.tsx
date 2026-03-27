@@ -698,7 +698,7 @@ export default function Slicing() {
 
   const handleApply = async (slice: NetworkSlice) => {
     try {
-      const res = await api.slices.apply(slice._id!);
+      const res = await api.slices.apply(slice._id!) as any;
       const applied = res.results?.filter((r: any) => r.status === 'applied').length || 0;
       const errors = res.results?.filter((r: any) => r.status === 'error').length || 0;
       showToast(errors > 0 ? 'error' : 'success',

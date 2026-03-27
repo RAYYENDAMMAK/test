@@ -37,7 +37,7 @@ export default function Tracing() {
         filter: form.filter,
         duration: Number(form.duration),
       });
-      setMsg({ type: 'success', text: `Capture started: ${res.id}` });
+      setMsg({ type: 'success', text: `Capture started: ${(res as any).id}` });
       loadAll();
     } catch (e: any) {
       setMsg({ type: 'error', text: e.message });
