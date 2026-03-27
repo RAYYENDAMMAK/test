@@ -18,8 +18,8 @@ spec:
       serviceAccountName: core-ui
       containers:
         - name: core-ui
-          image: core-ui:latest
-          imagePullPolicy: IfNotPresent
+          image: 5gcore-ui:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8080
           env:
