@@ -3,8 +3,10 @@
 #
 # Builds: open5gs:local
 # Usage:  command: ["open5gs-amfd", "-c", "/etc/open5gs/amf.yaml"]
+#
+# NOTE: Ubuntu 22.04 (jammy) — the Open5GS PPA has no noble (24.04) pocket yet.
 
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -17,7 +19,7 @@ RUN apt-get install -y \
         gnupg curl wget ca-certificates \
         iproute2 iptables iputils-ping net-tools
 
-# Add Open5GS PPA and install (Ubuntu 24.04 / noble)
+# Add Open5GS PPA and install (Ubuntu 22.04 / jammy)
 RUN add-apt-repository -y ppa:open5gs/latest && \
     apt-get update && \
     apt-get install -y open5gs && \
