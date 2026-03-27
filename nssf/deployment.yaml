@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: nssf
-          image: gradiant/open5gs:latest
+          image: open5gs:local
+          imagePullPolicy: Never
           command: ["open5gs-nssfd", "-c", "/etc/open5gs/nssf.yaml"]
           ports:
             - containerPort: 7777

@@ -25,7 +25,8 @@ spec:
     spec:
       containers:
         - name: smf
-          image: gradiant/open5gs:latest
+          image: open5gs:local
+          imagePullPolicy: Never
           command: ["open5gs-smfd", "-c", "/etc/open5gs/smf.yaml"]
           ports:
             - name: sbi

@@ -40,7 +40,8 @@ spec:
     spec:
       initContainers:
         - name: upf-init
-          image: gradiant/open5gs:latest
+          image: open5gs:local
+          imagePullPolicy: Never
           command:
             - sh
             - -c
@@ -60,7 +61,8 @@ spec:
               mountPath: /dev/net/tun
       containers:
         - name: upf
-          image: gradiant/open5gs:latest
+          image: open5gs:local
+          imagePullPolicy: Never
           command: ["open5gs-upfd", "-c", "/etc/open5gs/upf.yaml"]
           ports:
             - name: pfcp

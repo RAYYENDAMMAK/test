@@ -196,7 +196,25 @@ else
   info "kustomize already installed"
 fi
 
-# ── Step 6: Build UI Docker image ─────────────────────────────────────────────
+# ── Step 6: Build Open5GS image (from official Ubuntu PPA) ───────────────────
+step "Building Open5GS image (from official Ubuntu PPA)"
+
+if [[ -f "$INSTALL_DIR/open5gs/Dockerfile" ]]; then
+  # Check if already built and imported
+  if sudo k3s ctr images list 2>/dev/null | grep -q "open5gs:local"; then
+    info "open5gs:local already in k3s containerd — skipping build"
+  else
+    info "Building open5gs:local from Ubuntu PPA (this takes ~5 minutes on first run)..."
+    docker build -t open5gs:local "$INSTALL_DIR/open5gs/" 2>&1 | tee -a "$LOG_FILE"
+    info "Importing open5gs:local into k3s containerd..."
+    docker save open5gs:local | k3s ctr images import - 2>&1 | tee -a "$LOG_FILE"
+    success "Open5GS image built and imported"
+  fi
+else
+  warn "open5gs/Dockerfile not found — NF pods will fail to start"
+fi
+
+# ── Step 7: Build UI Docker image ─────────────────────────────────────────────
 step "Building 5G Core UI image"
 
 if [[ -d "$INSTALL_DIR/ui" ]]; then
@@ -225,7 +243,7 @@ else
   warn "ui/ directory not found — skipping UI image build"
 fi
 
-# ── Step 7: Create namespace and secrets ─────────────────────────────────────
+# ── Step 8: Create namespace and secrets ─────────────────────────────────────
 step "Creating namespace and configuration"
 
 k3s kubectl apply -f - <<EOF

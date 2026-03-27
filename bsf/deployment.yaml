@@ -19,7 +19,8 @@ spec:
           command: ['sh', '-c', 'until nc -z mongodb-svc 27017; do echo waiting for mongodb; sleep 2; done']
       containers:
         - name: bsf
-          image: gradiant/open5gs:latest
+          image: open5gs:local
+          imagePullPolicy: Never
           command: ["open5gs-bsfd", "-c", "/etc/open5gs/bsf.yaml"]
           ports:
             - containerPort: 7777

@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: ausf
-          image: gradiant/open5gs:latest
+          image: open5gs:local
+          imagePullPolicy: Never
           command: ["open5gs-ausfd", "-c", "/etc/open5gs/ausf.yaml"]
           ports:
             - containerPort: 7777
