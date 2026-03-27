@@ -80,6 +80,21 @@ export const api = {
     grafana: () => apiFetch<any>('/metrics/grafana'),
     query: (q: string) => apiFetch<any>(`/metrics/query?q=${encodeURIComponent(q)}`),
   },
+  gnbs: {
+    list:        ()         => apiFetch<any[]>('/gnbs'),
+    live:        ()         => apiFetch<any[]>('/gnbs/live'),
+    get:         (id: string) => apiFetch<any>(`/gnbs/${id}`),
+    create:      (data: any)  => apiFetch('/gnbs', { method: 'POST', body: JSON.stringify(data) }),
+    update:      (id: string, data: any) => apiFetch(`/gnbs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    remove:      (id: string) => apiFetch(`/gnbs/${id}`, { method: 'DELETE' }),
+    events:      (id: string) => apiFetch<any[]>(`/gnbs/${id}/events`),
+  },
+  multus: {
+    nads:        ()            => apiFetch<any[]>('/multus/nads'),
+    getNad:      (name: string) => apiFetch<any>(`/multus/nads/${name}`),
+    updateNad:   (name: string, data: any) => apiFetch(`/multus/nads/${name}`, { method: 'PUT', body: JSON.stringify(data) }),
+    status:      ()            => apiFetch<any[]>('/multus/status'),
+  },
   slices: {
     list: () => apiFetch<any[]>('/slices'),
     get: (id: string) => apiFetch<any>(`/slices/${id}`),

@@ -12,6 +12,8 @@ import Topology from './pages/Topology';
 import Logs from './pages/Logs';
 import Tracing from './pages/Tracing';
 import Slicing from './pages/Slicing';
+import GNBs from './pages/GNBs';
+import Networking from './pages/Networking';
 
 export default function App() {
   return (
@@ -36,6 +38,8 @@ export default function App() {
             <Route path="logs"        element={<Logs />} />
             <Route path="tracing"     element={<Tracing />} />
             <Route path="slicing"     element={<Slicing />} />
+            <Route path="gnbs"        element={<GNBs />} />
+            <Route path="networking"  element={<Networking />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

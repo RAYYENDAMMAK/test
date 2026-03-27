@@ -2,20 +2,22 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Settings, BarChart3,
-  Network, FileText, Radio, Layers, LogOut, User
+  Network, FileText, Radio, Layers, LogOut, User, Antenna, Share2
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
 
 const nav = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/subscribers', icon: Users, label: 'Subscribers' },
-  { to: '/nf-config', icon: Settings, label: 'NF Config' },
-  { to: '/metrics', icon: BarChart3, label: 'Metrics' },
-  { to: '/topology', icon: Network, label: 'Topology' },
-  { to: '/slicing', icon: Layers, label: 'Slicing' },
-  { to: '/logs', icon: FileText, label: 'Logs' },
-  { to: '/tracing', icon: Radio, label: 'Tracing' },
+  { to: '/dashboard',   icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/subscribers', icon: Users,            label: 'Subscribers' },
+  { to: '/nf-config',   icon: Settings,         label: 'NF Config' },
+  { to: '/metrics',     icon: BarChart3,        label: 'Metrics' },
+  { to: '/topology',    icon: Network,          label: 'Topology' },
+  { to: '/gnbs',        icon: Antenna,          label: 'gNBs / RAN' },
+  { to: '/slicing',     icon: Layers,           label: 'Slicing' },
+  { to: '/networking',  icon: Share2,           label: 'Networking' },
+  { to: '/logs',        icon: FileText,         label: 'Logs' },
+  { to: '/tracing',     icon: Radio,            label: 'Tracing' },
 ];
 
 export default function Sidebar() {
