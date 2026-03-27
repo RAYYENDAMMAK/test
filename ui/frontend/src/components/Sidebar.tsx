@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Settings, BarChart3,
-  Network, FileText, Radio, Wifi, Layers, LogOut, User
+  Network, FileText, Radio, Layers, LogOut, User
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
@@ -24,13 +24,11 @@ export default function Sidebar() {
   return (
     <aside className="w-56 bg-gray-900 border-r border-gray-800 flex flex-col">
       <div className="p-4 border-b border-gray-800">
-        <div className="flex items-center gap-2">
-          <Wifi className="text-blue-400" size={22} />
-          <div>
-            <div className="font-bold text-white text-sm">5G Core Manager</div>
-            <div className="text-xs text-gray-400">Open5GS on K8s</div>
-          </div>
-        </div>
+        <img
+          src="/ieee-5g6g-innovation-testbed-logo.png"
+          alt="IEEE 5G/6G Innovation Testbed"
+          className="h-10 w-auto object-contain"
+        />
       </div>
       <nav className="flex-1 p-3 space-y-1">
         {nav.map(({ to, icon: Icon, label }) => (

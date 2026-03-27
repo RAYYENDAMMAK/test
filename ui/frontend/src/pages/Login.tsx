@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wifi, Eye, EyeOff, LogIn, Shield } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
@@ -40,10 +40,11 @@ export default function Login() {
       <div className="relative w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600/10 border border-blue-500/20 rounded-2xl mb-4">
-            <Wifi className="text-blue-400" size={28} />
-          </div>
-          <h1 className="text-2xl font-bold text-white">5G Core Manager</h1>
+          <img
+            src="/ieee-5g6g-innovation-testbed-logo.png"
+            alt="IEEE 5G/6G Innovation Testbed"
+            className="h-16 w-auto object-contain mx-auto mb-4"
+          />
           <p className="text-gray-500 text-sm mt-1">Tunisia 5G Core Testbed</p>
         </div>
 
