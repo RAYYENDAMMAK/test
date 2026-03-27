@@ -29,7 +29,7 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin123}"
 JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32 2>/dev/null || echo 'change-me-in-production')}"
 K3S_VERSION="${K3S_VERSION:-v1.35.1+k3s1}"
 UI_IMAGE="${UI_IMAGE:-5gcore-ui:latest}"
-INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALL_DIR="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd)"
 LOG_FILE="/tmp/5gcore-install.log"
 
 # ── Banner ────────────────────────────────────────────────────────────────────
@@ -202,6 +202,8 @@ step "Building 5G Core UI image"
 if [[ -d "$INSTALL_DIR/ui" ]]; then
   cd "$INSTALL_DIR/ui"
 
+  [[ ! -f "Dockerfile" ]] && error "Dockerfile not found in $INSTALL_DIR/ui — check git clone is complete"
+
   # Check if Node.js is available for build, otherwise use Docker
   if command -v node &>/dev/null; then
     NODE_VER=$(node --version)
@@ -211,11 +213,11 @@ if [[ -d "$INSTALL_DIR/ui" ]]; then
   fi
 
   info "Building Docker image: $UI_IMAGE (this may take a few minutes)..."
-  docker build -t "$UI_IMAGE" . >> "$LOG_FILE" 2>&1
+  docker build -t "$UI_IMAGE" . 2>&1 | tee -a "$LOG_FILE"
 
   # Import into k3s containerd
   info "Importing image into k3s containerd..."
-  docker save "$UI_IMAGE" | k3s ctr images import - >> "$LOG_FILE" 2>&1
+  docker save "$UI_IMAGE" | k3s ctr images import - 2>&1 | tee -a "$LOG_FILE"
 
   cd "$INSTALL_DIR"
   success "UI image built and imported"
