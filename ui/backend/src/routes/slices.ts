@@ -53,7 +53,7 @@ const sliceSchema = new mongoose.Schema({
   networkFunctions: { type: [nfAllocationSchema], default: [] },
 }, { timestamps: true });
 
-const Slice = mongoose.models.Slice || mongoose.model('Slice', sliceSchema);
+const Slice = (mongoose.models.Slice || mongoose.model('Slice', sliceSchema)) as mongoose.Model<any>;
 
 // Ensure mongo on every request
 router.use(async (_req, _res, next) => { await connectMongo(); next(); });

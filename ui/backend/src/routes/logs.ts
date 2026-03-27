@@ -52,7 +52,7 @@ router.get('/:pod/stream', async (req: Request, res: Response) => {
       server
     );
 
-    const options: http.RequestOptions = {
+    const options: https.RequestOptions = {
       hostname: url.hostname,
       port: url.port || (url.protocol === 'https:' ? 443 : 80),
       path: url.pathname + url.search,

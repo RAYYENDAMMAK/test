@@ -68,4 +68,4 @@ const subscriberSchema = new mongoose.Schema({
   __v: Number,
 }, { collection: 'subscribers', timestamps: true });
 
-export const Subscriber = mongoose.models.Subscriber || mongoose.model('Subscriber', subscriberSchema);
+export const Subscriber = (mongoose.models.Subscriber || mongoose.model('Subscriber', subscriberSchema)) as mongoose.Model<any>;

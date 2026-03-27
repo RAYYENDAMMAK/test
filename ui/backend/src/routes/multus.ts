@@ -30,14 +30,14 @@ function parseNadConfig(raw: string): any {
 function summariseNad(item: any) {
   const name   = item.metadata?.name as string;
   const config = parseNadConfig(item.spec?.config || '{}');
-  const meta   = NAD_META[name] || {};
+  const meta   = NAD_META[name] as typeof NAD_META[string] | undefined;
   return {
     name,
-    iface:     meta.iface  || name,
-    proto:     meta.proto  || '—',
-    port:      meta.port   || '—',
-    nfs:       meta.nfs    || [],
-    color:     meta.color  || '#6b7280',
+    iface:     meta?.iface  || name,
+    proto:     meta?.proto  || '—',
+    port:      meta?.port   || '—',
+    nfs:       meta?.nfs    || [],
+    color:     meta?.color  || '#6b7280',
     cniType:   config.type      || '—',
     master:    config.master    || '—',
     mode:      config.mode      || '—',

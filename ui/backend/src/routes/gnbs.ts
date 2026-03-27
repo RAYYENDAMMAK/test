@@ -29,7 +29,7 @@ const gnbRegistrySchema = new mongoose.Schema({
 }, { timestamps: true, collection: 'gnb_registry' });
 
 const GnbRegistry =
-  mongoose.models.GnbRegistry || mongoose.model('GnbRegistry', gnbRegistrySchema);
+  (mongoose.models.GnbRegistry || mongoose.model('GnbRegistry', gnbRegistrySchema)) as mongoose.Model<any>;
 
 const gnbEventSchema = new mongoose.Schema({
   gnbId:     { type: String, required: true, index: true },
@@ -44,7 +44,7 @@ const gnbEventSchema = new mongoose.Schema({
 gnbEventSchema.index({ timestamp: 1 }, { expireAfterSeconds: 2592000 });
 
 const GnbEvent =
-  mongoose.models.GnbEvent || mongoose.model('GnbEvent', gnbEventSchema);
+  (mongoose.models.GnbEvent || mongoose.model('GnbEvent', gnbEventSchema)) as mongoose.Model<any>;
 
 // ── SCTP types ────────────────────────────────────────────────────────────────
 
