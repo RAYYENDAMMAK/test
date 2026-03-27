@@ -6,7 +6,8 @@ metadata:
 data:
   udr.yaml: |
     logger:
-      file: /var/log/open5gs/udr.log
+      file:
+        path: /var/log/open5gs/udr.log
       level: info
 
     udr:

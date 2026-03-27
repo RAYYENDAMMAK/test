@@ -6,7 +6,8 @@ metadata:
 data:
   amf.yaml: |
     logger:
-      file: /var/log/open5gs/amf.log
+      file:
+        path: /var/log/open5gs/amf.log
       level: info
 
     amf:
@@ -56,3 +57,6 @@ data:
         full: Open5GS
         short: O5GS
       amf_name: open5gs-amf0
+      time:
+        t3512:
+          value: 540   # UE periodic registration timer (seconds)
