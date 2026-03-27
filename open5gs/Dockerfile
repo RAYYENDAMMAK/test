@@ -8,15 +8,19 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Open5GS from the official PPA (Ubuntu 24.04 / noble)
-RUN apt-get update -qq && \
-    apt-get install -y -qq \
+# Bring base image fully up to date first (avoids "held broken packages" conflict)
+RUN apt-get update && apt-get upgrade -y
+
+# Install prerequisites
+RUN apt-get install -y \
         software-properties-common \
         gnupg curl wget ca-certificates \
-        iproute2 iptables iputils-ping net-tools && \
-    add-apt-repository -y ppa:open5gs/latest && \
-    apt-get update -qq && \
-    apt-get install -y -qq --no-install-recommends open5gs && \
+        iproute2 iptables iputils-ping net-tools
+
+# Add Open5GS PPA and install (Ubuntu 24.04 / noble)
+RUN add-apt-repository -y ppa:open5gs/latest && \
+    apt-get update && \
+    apt-get install -y open5gs && \
     rm -rf /var/lib/apt/lists/*
 
 # Verify all expected NF binaries are present
