@@ -17,7 +17,7 @@ export const NAMESPACE = process.env.K8S_NAMESPACE || 'open5gs';
 
 export const NF_NAMES = [
   'nrf', 'ausf', 'udm', 'udr', 'pcf',
-  'nssf', 'bsf', 'amf', 'smf', 'upf', 'webui'
+  'nssf', 'bsf', 'amf', 'smf', 'upf',
 ];
 
 export const NF_CONFIG_MAP: Record<string, string> = {
