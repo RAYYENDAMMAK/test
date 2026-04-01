@@ -9,13 +9,16 @@ export interface AuthPayload {
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  // Accept token from Authorization header or ?token= query param (needed for EventSource)
   const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  const token = header.slice(7);
+  const raw = (header?.startsWith('Bearer ') ? header.slice(7) : null)
+            ?? (req.query.token as string | undefined)
+            ?? null;
+
+  if (!raw) return res.status(401).json({ error: 'Unauthorized' });
+
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as AuthPayload;
+    const payload = jwt.verify(raw, JWT_SECRET) as AuthPayload;
     (req as any).user = payload;
     next();
   } catch {

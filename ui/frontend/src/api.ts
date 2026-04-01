@@ -62,7 +62,11 @@ export const api = {
   },
   logs: {
     get: (pod: string, tail = 200) => apiFetch<any>(`/logs/${pod}?tail=${tail}`),
-    streamUrl: (pod: string) => `${BASE}/logs/${pod}/stream`,
+    streamUrl: (pod: string) => {
+      const token = getStoredToken();
+      const q = token ? `?token=${encodeURIComponent(token)}` : '';
+      return `${BASE}/logs/${pod}/stream${q}`;
+    },
   },
   pcap: {
     sessions: () => apiFetch<any[]>('/pcap/sessions'),
