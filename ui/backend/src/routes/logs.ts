@@ -1,8 +1,17 @@
 import { Router, Request, Response } from 'express';
 import * as http from 'http';
 import * as https from 'https';
+import * as fs from 'fs';
 import { k8sConfig, NAMESPACE } from '../k8s-client';
 import { coreV1Api } from '../k8s-client';
+
+const SA_TOKEN = '/var/run/secrets/kubernetes.io/serviceaccount/token';
+
+function getK8sToken(): string | undefined {
+  // In-cluster (k3s): token is a mounted file, not embedded in kubeconfig
+  if (fs.existsSync(SA_TOKEN)) return fs.readFileSync(SA_TOKEN, 'utf8').trim();
+  return k8sConfig.getCurrentUser()?.token || undefined;
+}
 
 const router = Router();
 
@@ -39,7 +48,7 @@ router.get('/:pod/stream', async (req: Request, res: Response) => {
   try {
     const cluster = k8sConfig.getCurrentCluster();
     const server = cluster?.server || 'https://kubernetes.default.svc';
-    const token = k8sConfig.getCurrentUser()?.token;
+    const token = getK8sToken();
 
     const params = new URLSearchParams({
       follow: 'true',
