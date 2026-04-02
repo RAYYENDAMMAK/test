@@ -35,6 +35,8 @@ spec:
               value: http://prometheus-svc:9090
             - name: GRAFANA_URL
               value: http://grafana-svc:3000
+            - name: LOKI_URL
+              value: http://loki-svc:3100
             - name: PCAP_DIR
               value: /tmp/pcaps
           resources:

@@ -67,6 +67,14 @@ export const api = {
       const q = token ? `?token=${encodeURIComponent(token)}` : '';
       return `${BASE}/logs/${pod}/stream${q}`;
     },
+    lokiReady: () => apiFetch<any>('/logs/loki/ready'),
+    lokiQuery: (params: {
+      nf?: string; query?: string; since?: string;
+      start?: number; end?: number; limit?: number; direction?: string;
+    }) => apiFetch<any>(`/logs/loki/query?${new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([,v]) => v !== undefined).map(([k,v]) => [k, String(v)]))
+    )}`),
+    lokiLabels: () => apiFetch<any>('/logs/loki/labels'),
   },
   pcap: {
     sessions: () => apiFetch<any[]>('/pcap/sessions'),

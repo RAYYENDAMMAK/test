@@ -52,3 +52,5 @@ resources:
   - ui/k8s/service.yaml
   - ui/k8s/prometheus.yaml
   - ui/k8s/grafana.yaml
+  - loki/loki.yaml
+  - loki/promtail.yaml
