@@ -1,0 +1,7 @@
+sudo kubectl apply -f multus/01-nad-n2.yaml                                   
+  sudo kubectl apply -f multus/02-nad-n3.yaml                                    
+  sudo kubectl apply -f multus/03-nad-n4.yaml                                    
+  sudo kubectl apply -f multus/04-nad-n6.yaml
+
+sudo kubectl rollout restart deployment -n open5gs amf smf upf  
+

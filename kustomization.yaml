@@ -6,12 +6,12 @@ namespace: open5gs
 resources:
   - namespace.yaml
   # Multus CNI + NADs — uncomment only if dedicated NICs are available (e.g. AWS EC2 with extra ENIs)
-  # - multus/00-multus-daemonset.yaml
-  # - multus/01-nad-n2.yaml
-  # - multus/02-nad-n3.yaml
-  # - multus/03-nad-n4.yaml
-  # - multus/04-nad-n6.yaml
-  # - multus/05-whereabouts.yaml
+  - multus/00-multus-daemonset.yaml
+  - multus/01-nad-n2.yaml
+  - multus/02-nad-n3.yaml
+  - multus/03-nad-n4.yaml
+  - multus/04-nad-n6.yaml
+  - multus/05-whereabouts.yaml
   - mongodb/statefulset.yaml
   - mongodb/service.yaml
   - nrf/configmap.yaml

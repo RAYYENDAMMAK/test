@@ -31,10 +31,18 @@ function summariseNad(item: any) {
   const name   = item.metadata?.name as string;
   const config = parseNadConfig(item.spec?.config || '{}');
   const meta   = NAD_META[name] as typeof NAD_META[string] | undefined;
+  const ipamAddresses = config.ipam?.addresses || [];
+  const firstAddress = ipamAddresses[0]?.address || '';
+  const firstGateway = ipamAddresses[0]?.gateway || '';
   return {
     name,
-    iface:     meta?.iface  || name,
+    iface:     config.master    || meta?.iface  || name,
     proto:     meta?.proto  || '—',
+    cidr:      firstAddress,
+    gateway:   firstGateway,
+    usedBy:    meta?.nfs?.join(', ') || '—',
+    purpose:   config.type ? `${config.type} (${config.mode || 'bridge'})` : '—',
+    // Additional fields for detailed view
     port:      meta?.port   || '—',
     nfs:       meta?.nfs    || [],
     color:     meta?.color  || '#6b7280',
@@ -42,7 +50,7 @@ function summariseNad(item: any) {
     master:    config.master    || '—',
     mode:      config.mode      || '—',
     ipamType:  config.ipam?.type || '—',
-    addresses: (config.ipam?.addresses || []).map((a: any) => a.address),
+    addresses: ipamAddresses.map((a: any) => a.address),
     range:     config.ipam?.range || null,
     rangeStart:config.ipam?.range_start || null,
     rangeEnd:  config.ipam?.range_end   || null,
@@ -162,7 +170,7 @@ router.get('/status', async (req: Request, res: Response) => {
           .filter((r: any) => r.name && !attached.some(a => a.includes(r.name)))
           .map((r: any) => r.name);
 
-        return { app, podName, phase, interfaces, missing, multusReady: missing.length === 0 };
+        return { nf: app, pod: podName, phase, interfaces, missing, multusReady: missing.length === 0 };
       });
 
     res.json(result);
