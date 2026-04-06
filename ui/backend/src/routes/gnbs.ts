@@ -79,15 +79,17 @@ async function pollAmfSctp(): Promise<SctpAssoc[]> {
     }
 
     // Build exec client
-    const kc = new k8s.KubeConfig();
+    const kc = new k8s.KubeConfig(); // crée un objet de configuration Kubernetes
     kc.loadFromDefault();
-    const exec = new Exec(kc);
-
+    const exec = new Exec(kc);// crée un client Exec qui peut exécuter des commandes dans un pod Kubernetes.
+    //il utilise la configuration kc pour se connecter au cluster et lancer des commandes à l’intérieur des conteneurs.
     const output = await new Promise<string>((resolve, reject) => {
       let stdout = '';
       let stderr = '';
       const stdoutStream = new stream.PassThrough();
       const stderrStream = new stream.PassThrough();
+            //stdoutStream et stderrStream : des flux PassThrough (de Node.js) qui agissent comme des tuyaux pour recevoir les données du pod.
+
       stdoutStream.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
       stderrStream.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
 
@@ -95,7 +97,7 @@ async function pollAmfSctp(): Promise<SctpAssoc[]> {
         NAMESPACE,
         podName,
         'amf',
-        ['cat', '/proc/net/sctp'],
+        ['cat', '/proc/net/sctp/assocs'],
         stdoutStream,
         stderrStream,
         null,
@@ -112,7 +114,12 @@ async function pollAmfSctp(): Promise<SctpAssoc[]> {
 
     // Parse /proc/net/sctp
     const lines = output.split('\n').filter(l => l.trim());
-    if (lines.length < 2) return [];
+    if (lines.length < 2) {
+      console.log('[gnbs] No SCTP associations found in /proc/net/sctp');
+      return [];
+    }
+
+    console.log('[gnbs] /proc/net/sctp output:', output);
 
     const sstMap: Record<number, string> = {
       4: 'ESTABLISHED',
@@ -130,15 +137,25 @@ async function pollAmfSctp(): Promise<SctpAssoc[]> {
       const cols = line.split(/\s+/);
       // col indices (0-based): 0=ASSOC, 1=sk, 2=sty, 3=sst, 4=tx_queue, 5=rx_queue,
       // 6=uid, 7=inode, 8=lport, 9=rport, 10=laddrs, <->, raddrs, ..., assoc-id
-      if (cols.length < 12) continue;
+
+      if (cols.length < 12) {
+        console.log('[gnbs] Skipping line (not enough columns):', line);
+        continue;
+      }
 
       const lport = cols[8];
-      if (lport !== '38412') continue;
+      // Try both decimal and hex parsing for port
+      const lportNum = parseInt(lport, 16) || parseInt(lport, 10);
+      console.log('[gnbs] Checking line, lport:', lport, 'parsed as:', lportNum);
+
+      if (lportNum !== 38412) continue; // On ne s'intéresse qu'aux associations SCTP sur le port 38412 (AMF)
 
       const sstInt = parseInt(cols[3], 16) || parseInt(cols[3], 10);
       const sctpState = sstMap[sstInt] || 'UNKNOWN';
       const rport = parseInt(cols[9], 16) || parseInt(cols[9], 10);
       const localAddr = cols[10];
+
+      console.log('[gnbs] Found matching SCTP association:', { sctpState, rport, localAddr });
 
       // Everything after '<->' up to the last numeric token is raddrs
       const arrowIdx = cols.indexOf('<->');
@@ -163,6 +180,7 @@ async function pollAmfSctp(): Promise<SctpAssoc[]> {
       });
     }
 
+    console.log('[gnbs] Found', assocs.length, 'SCTP associations');
     return assocs;
   } catch (err: any) {
     console.warn('[gnbs] pollAmfSctp failed:', err.message);

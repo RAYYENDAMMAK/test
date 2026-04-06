@@ -1,0 +1,8 @@
+sudo kubectl logs -n open5gs -l app=core-ui --tail=100 2>&1 | grep -i -E "(error|slice|apply|k8s|permission|forbidden)" | head -50
+sudo kubectl get role core-ui-role -n open5gs -o yaml 2>&1
+sudo kubectl apply -f ui/k8s/rbac.yaml
+sudo kubectl rollout restart deployment core-ui -n open5gs
+sudo kubectl rollout status deployment core-ui -n open5gs
+sudo kubectl apply -f ui/k8s/rbac.yaml
+sudo kubectl rollout restart deployment core-ui -n open5gs
+sudo kubectl rollout status deployment core-ui -n open5gs

@@ -33,20 +33,20 @@ const EMPTY_GNB = {
 };
 
 export default function GNBs() {
-  const [gnbs, setGnbs] = useState<GnbEntry[]>([]);
-  const [live, setLive] = useState<LiveAssoc[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [polling, setPolling] = useState(false);
-  const [lastPoll, setLastPoll] = useState<string>('—');
+  const [gnbs, setGnbs] = useState<GnbEntry[]>([]); //affiche la table des gNBs enregistrés, permet l'édition/suppression.
+  const [live, setLive] = useState<LiveAssoc[]>([]); //affiche les connexions SCTP en cours, calcule les stats (connectés, UEs actifs).
+  const [loading, setLoading] = useState(true); //affiche "Loading…" dans la table tant que loadGnbs() n'a pas terminé.
+  const [polling, setPolling] = useState(false);//Usage : désactive le bouton et montre "Polling…" pendant pollLive().
+  const [lastPoll, setLastPoll] = useState<string>('—'); // affiche "Last polled: 14:32:15" dans le header pour indiquer la fraîcheur des données.
   const [modal, setModal] = useState<{ open: boolean; editing: GnbEntry | null }>({ open: false, editing: null });
-  const [form, setForm] = useState<any>(EMPTY_GNB);
+  const [form, setForm] = useState<any>(EMPTY_GNB); //lie les inputs de la modale aux valeurs, permet la saisie/édition.
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const loadGnbs = useCallback(async () => {
     try {
       const data = await api.gnbs.list();
-      setGnbs(data);
+      setGnbs(data); //fonction pour mettre à jour la liste des gNBs.
     } catch { /* ignore */ }
     finally { setLoading(false); }
   }, []);
@@ -55,7 +55,7 @@ export default function GNBs() {
     setPolling(true);
     try {
       const data = await api.gnbs.live();
-      setLive(data);
+      setLive(data); //fonction pour mettre à jour les données live.
       setLastPoll(new Date().toLocaleTimeString());
     } catch { setLive([]); }
     finally { setPolling(false); }
@@ -64,14 +64,16 @@ export default function GNBs() {
   useEffect(() => {
     loadGnbs();
     pollLive();
-  }, [loadGnbs, pollLive]);
+  }, [loadGnbs, pollLive]); // le hook se relance si ces fonctions changent
 
   const connected = live.filter(l => l.sctpState === 'ESTABLISHED').length;
   const totalUEs   = live.reduce((s, l) => s + (l.ueCount || 0), 0);
 
   function openRegister() { setForm(EMPTY_GNB); setModal({ open: true, editing: null }); setError(''); }
+  //setForm : fonction pour mettre à jour les champs du formulaire.
   function openEdit(g: GnbEntry) { setForm({ ...g }); setModal({ open: true, editing: g }); setError(''); }
   function closeModal() { setModal({ open: false, editing: null }); }
+  //setModal : fonction pour ouvrir/fermer la modale et spécifier si on édite un gNB existant.
 
   async function save() {
     if (!form.gnbId || !form.name) { setError('gNB ID and Name are required'); return; }
@@ -146,13 +148,18 @@ export default function GNBs() {
       </div>
 
       {/* Live SCTP associations */}
-      {live.length > 0 && (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-800 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <Activity size={13} className="text-blue-400" /> Live SCTP Associations
-            </span>
+      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-800 flex items-center justify-between">
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+            <Activity size={13} className="text-blue-400" /> Live SCTP Associations
+          </span>
+          <span className="text-xs text-gray-500">{live.length} association(s)</span>
+        </div>
+        {live.length === 0 ? (
+          <div className="px-5 py-8 text-center text-gray-500 text-sm">
+            No active SCTP associations — gNBs will appear here when they connect to the AMF
           </div>
+        ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800">
@@ -183,8 +190,8 @@ export default function GNBs() {
               })}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Registered gNBs */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">

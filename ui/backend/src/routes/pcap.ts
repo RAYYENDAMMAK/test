@@ -47,21 +47,44 @@ router.post('/start', async (req: Request, res: Response) => {
   sessions.set(id, session);
 
   try {
+    // Get the actual container name - default to first container in pod
+    let containerName = container;
+    if (!containerName) {
+      const podRes = await coreV1Api.readNamespacedPod(pod, NAMESPACE);
+      const containers = podRes.body.spec?.containers || [];
+      if (containers.length === 0) {
+        throw new Error('No containers found in pod');
+      }
+      containerName = containers[0].name;
+    }
+
     const exec = new k8s.Exec(k8sConfig);
-    const ws = await exec.exec(
-      NAMESPACE, pod,
-      container || pod,
-      ['tcpdump', '-i', iface, '-w', '-', ...(filter ? [filter] : [])],
-      new stream.PassThrough(),
-      process.stderr as any,
-      process.stdin as any,
-      false
+    const stdout = new stream.PassThrough();
+    const stderr = new stream.PassThrough();
+    const stdin = new stream.PassThrough();
+    stdin.end();
+
+    const cmd = ['tcpdump', '-i', iface, '-w', '-', ...(filter ? [filter] : [])];
+
+    await exec.exec(
+      NAMESPACE,
+      pod,
+      containerName,
+      cmd,
+      stdout,
+      stderr,
+      stdin,
+      false,
+      (status: k8s.V1Status) => {
+        console.log(`[pcap] exec completed: ${JSON.stringify(status)}`);
+      }
     );
 
     res.json({ id, status: 'started', message: `PCAP capture started on pod ${pod}` });
   } catch (err: any) {
     session.status = 'error';
-    res.status(500).json({ error: err.message });
+    console.error('[pcap] start failed:', err.message, err.body?.message || '');
+    res.status(500).json({ error: err.body?.message || err.message });
   }
 });
 

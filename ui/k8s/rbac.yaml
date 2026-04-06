@@ -10,13 +10,13 @@ metadata:
   name: core-ui-role
   namespace: open5gs
 rules:
-  # Read deployments, pods, services
+  # Read and update deployments, pods, services
   - apiGroups: ["apps"]
     resources: ["deployments", "replicasets"]
-    verbs: ["get", "list", "watch"]
+    verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: [""]
     resources: ["pods", "pods/log", "pods/exec", "services", "nodes", "configmaps"]
-    verbs: ["get", "list", "watch", "update", "patch"]
+    verbs: ["get", "list", "watch", "update", "patch", "create"]
   # Allow pod deletion for restart
   - apiGroups: [""]
     resources: ["pods"]

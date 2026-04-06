@@ -134,7 +134,8 @@ router.post('/:id/apply', async (req: Request, res: Response) => {
         await appsV1Api.replaceNamespacedDeployment(nfAlloc.name, NAMESPACE, deploy.body);
         results.push({ nf: nfAlloc.name, status: 'applied' });
       } catch (e: any) {
-        results.push({ nf: nfAlloc.name, status: 'error', error: e.message });
+        console.error(`[slices] Failed to update ${nfAlloc.name}:`, e.message, e.body?.message || '');
+        results.push({ nf: nfAlloc.name, status: 'error', error: e.body?.message || e.message });
       }
     }
 
