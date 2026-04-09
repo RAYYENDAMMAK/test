@@ -6,6 +6,43 @@ const router = Router();
 
 const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://prometheus-svc:9090';
 const GRAFANA_URL = process.env.GRAFANA_URL || 'http://grafana-svc:3000';
+const GRAFANA_EXTERNAL = process.env.GRAFANA_EXTERNAL_URL || '';
+
+function isInternalGrafanaUrl(value: string): boolean {
+  try {
+    const { hostname } = new URL(value);
+    return (
+      hostname === 'grafana' ||
+      hostname === 'grafana-svc' ||
+      hostname.endsWith('.svc') ||
+      hostname.endsWith('.cluster.local')
+    );
+  } catch {
+    return false;
+  }
+}
+
+function getGrafanaExternalUrl(req: Request): string {
+  if (GRAFANA_EXTERNAL) {
+    return GRAFANA_EXTERNAL;
+  }
+
+  if (!isInternalGrafanaUrl(GRAFANA_URL)) {
+    return GRAFANA_URL;
+  }
+
+  const forwardedProto = req.header('x-forwarded-proto');
+  const protocol = forwardedProto ? forwardedProto.split(',')[0].trim() : req.protocol;
+  const forwardedHost = req.header('x-forwarded-host');
+  const host = forwardedHost || req.get('host') || '';
+
+  if (!host) {
+    return 'http://localhost:3000';
+  }
+
+  const hostname = host.split(':')[0];
+  return `${protocol}://${hostname}:3000`;
+}
 
 async function queryPrometheus(query: string): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -52,7 +89,7 @@ router.get('/summary', async (req: Request, res: Response) => {
 
 // GET /api/metrics/grafana - return Grafana URL for embedding
 router.get('/grafana', (req: Request, res: Response) => {
-  res.json({ url: GRAFANA_URL });
+  res.json({ url: getGrafanaExternalUrl(req) });
 });
 
 // GET /api/metrics/prometheus-proxy - proxy prometheus queries

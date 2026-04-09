@@ -326,7 +326,7 @@ k3s kubectl apply -k . >> "$LOG_FILE" 2>&1 || {
     smf/configmap.yaml smf/deployment.yaml smf/service.yaml \
     upf/configmap.yaml upf/deployment.yaml upf/service.yaml \
     ui/k8s/rbac.yaml ui/k8s/deployment.yaml ui/k8s/service.yaml \
-    ui/k8s/prometheus.yaml ui/k8s/grafana.yaml; do
+    ui/k8s/prometheus.yaml ui/k8s/grafana.yaml ui/k8s/grafana-dashboards.yaml; do
     [[ -f "$f" ]] && k3s kubectl apply -f "$f" >> "$LOG_FILE" 2>&1 || true
   done
 }
@@ -358,10 +358,10 @@ step "Getting service endpoints"
 sleep 5  # Let LoadBalancer IPs settle
 
 UI_PORT=$(k3s kubectl get svc core-ui-svc -n "$NAMESPACE" \
-  -o jsonpath='{.spec.ports[0].nodePort}' 2>/dev/null || echo "80")
+  -o jsonpath='{.spec.ports[0].port}' 2>/dev/null || echo "80")
 
 GRAFANA_PORT=$(k3s kubectl get svc grafana-svc -n "$NAMESPACE" \
-  -o jsonpath='{.spec.ports[0].nodePort}' 2>/dev/null || echo "3000")
+  -o jsonpath='{.spec.ports[0].port}' 2>/dev/null || echo "3000")
 
 AMF_IP=$(k3s kubectl get svc amf-svc -n "$NAMESPACE" \
   -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "$SERVER_IP")

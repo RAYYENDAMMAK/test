@@ -73,6 +73,14 @@ spec:
               mountPath: /etc/grafana/provisioning/datasources
             - name: grafana-dashboards-config
               mountPath: /etc/grafana/provisioning/dashboards
+            - name: grafana-dashboard-overview
+              mountPath: /etc/grafana/dashboards/overview
+            - name: grafana-dashboard-amf
+              mountPath: /etc/grafana/dashboards/amf
+            - name: grafana-dashboard-smf
+              mountPath: /etc/grafana/dashboards/smf
+            - name: grafana-dashboard-upf
+              mountPath: /etc/grafana/dashboards/upf
             - name: grafana-storage
               mountPath: /var/lib/grafana
           resources:
@@ -89,6 +97,18 @@ spec:
         - name: grafana-dashboards-config
           configMap:
             name: grafana-dashboards-config
+        - name: grafana-dashboard-overview
+          configMap:
+            name: grafana-dashboard-overview
+        - name: grafana-dashboard-amf
+          configMap:
+            name: grafana-dashboard-amf
+        - name: grafana-dashboard-smf
+          configMap:
+            name: grafana-dashboard-smf
+        - name: grafana-dashboard-upf
+          configMap:
+            name: grafana-dashboard-upf
         - name: grafana-storage
           emptyDir: {}
 ---
