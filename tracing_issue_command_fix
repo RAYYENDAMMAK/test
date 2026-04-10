@@ -1,0 +1,19 @@
+The code change alone is not enough on a new server. The fix depends on the rebuilt open5gs:local image including tcpdump, plus the updated UI backend.
+
+  After you pull the repo on the other server, run:
+
+  cd ~/ieee_5g_core
+
+  sudo docker build --no-cache -t open5gs:local ./open5gs
+  sudo docker save open5gs:local | sudo k3s ctr images import -
+
+  sudo docker build -t 5gcore-ui:latest ./ui
+  sudo docker save 5gcore-ui:latest | sudo k3s ctr images import -
+
+  sudo kubectl -n open5gs rollout restart deployment/amf deployment/ausf deployment/bsf deployment/nrf deployment/nssf deployment/pcf deployment/smf deployment/udm deployment/udr deployment/
+  upf deployment/core-ui
+
+  Then verify:
+
+  sudo kubectl -n open5gs exec deployment/amf -- which tcpdump
+  sudo kubectl -n open5gs exec deployment/upf -- which tcpdump

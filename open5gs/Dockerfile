@@ -17,7 +17,8 @@ RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y \
         software-properties-common \
         gnupg curl wget ca-certificates \
-        iproute2 iptables iputils-ping net-tools
+        iproute2 iptables iputils-ping net-tools \
+        tcpdump
 
 # Add Open5GS PPA and install 5GC NFs only (Ubuntu 22.04 / jammy).
 # We do NOT install the 'open5gs' meta-package because it pulls in the 4G EPC

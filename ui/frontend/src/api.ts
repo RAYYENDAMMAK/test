@@ -82,7 +82,11 @@ export const api = {
     start: (data: any) => apiFetch('/pcap/start', { method: 'POST', body: JSON.stringify(data) }),
     stop: (id: string) => apiFetch(`/pcap/stop/${id}`, { method: 'POST' }),
     delete: (id: string) => apiFetch(`/pcap/sessions/${id}`, { method: 'DELETE' }),
-    downloadUrl: (id: string) => `${BASE}/pcap/download/${id}`,
+    downloadUrl: (id: string) => {
+      const token = getStoredToken();
+      const q = token ? `?token=${encodeURIComponent(token)}` : '';
+      return `${BASE}/pcap/download/${id}${q}`;
+    },
   },
   topology: {
     get: () => apiFetch<any>('/topology'),
