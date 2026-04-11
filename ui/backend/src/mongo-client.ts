@@ -15,6 +15,37 @@ export async function connectMongo() {
   }
 }
 
+const ambrSchema = new mongoose.Schema({
+  downlink: { value: Number, unit: Number },
+  uplink: { value: Number, unit: Number },
+}, { _id: false });
+
+const arpSchema = new mongoose.Schema({
+  priority_level: Number,
+  pre_emption_capability: Number,
+  pre_emption_vulnerability: Number,
+}, { _id: false });
+
+const qosSchema = new mongoose.Schema({
+  index: Number,
+  arp: arpSchema,
+}, { _id: false });
+
+const sessionSchema = new mongoose.Schema({
+  name: String,
+  type: Number,
+  pcc_rule: [mongoose.Schema.Types.Mixed],
+  ambr: ambrSchema,
+  qos: qosSchema,
+}, { _id: false });
+
+const sliceSchema = new mongoose.Schema({
+  sst: Number,
+  sd: String,
+  default_indicator: Boolean,
+  session: [sessionSchema],
+}, { _id: false });
+
 // Open5GS subscriber schema
 const subscriberSchema = new mongoose.Schema({
   imsi: { type: String, required: true, unique: true },
@@ -30,36 +61,8 @@ const subscriberSchema = new mongoose.Schema({
     amf: String,
     sqn: mongoose.Schema.Types.Mixed,
   },
-  ambr: {
-    downlink: { value: Number, unit: Number },
-    uplink: { value: Number, unit: Number },
-  },
-  slice: [
-    {
-      sst: Number,
-      sd: String,
-      default_indicator: Boolean,
-      session: [
-        {
-          name: String,
-          type: Number,
-          pcc_rule: [mongoose.Schema.Types.Mixed],
-          ambr: {
-            downlink: { value: Number, unit: Number },
-            uplink: { value: Number, unit: Number },
-          },
-          qos: {
-            index: Number,
-            arp: {
-              priority_level: Number,
-              pre_emption_capability: Number,
-              pre_emption_vulnerability: Number,
-            },
-          },
-        },
-      ],
-    },
-  ],
+  ambr: ambrSchema,
+  slice: [sliceSchema],
   access_restriction_data: Number,
   subscriber_status: Number,
   operator_determined_barring: Number,

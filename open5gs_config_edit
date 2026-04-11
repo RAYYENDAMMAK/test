@@ -1,0 +1,3 @@
+you need to change to config mongodb of open5gs to point on it : 
+go to : /etc/mongod.conf
+edit with nano the bind ip address : make it : 127.0.0.1,192.168.1.222 for exemple ( it is the address used in your ip add /url)
