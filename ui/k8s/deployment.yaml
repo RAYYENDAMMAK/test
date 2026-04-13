@@ -39,6 +39,10 @@ spec:
               value: http://loki-svc:3100
             - name: PCAP_DIR
               value: /tmp/pcaps
+            - name: NF_CONFIG_DIR
+              value: /var/lib/5gcore-ui/nf-configs
+            - name: SOURCE_CONFIGMAP_DIR
+              value: /etc/open5gs
           resources:
             requests:
               memory: "128Mi"
@@ -61,7 +65,19 @@ spec:
           volumeMounts:
             - name: pcap-storage
               mountPath: /tmp/pcaps
+            - name: nf-config-storage
+              mountPath: /var/lib/5gcore-ui
+            - name: open5gs-config
+              mountPath: /etc/open5gs
       volumes:
         - name: pcap-storage
           emptyDir:
             sizeLimit: 2Gi
+        - name: nf-config-storage
+          hostPath:
+            path: /var/lib/5gcore-ui
+            type: DirectoryOrCreate
+        - name: open5gs-config
+          hostPath:
+            path: /etc/open5gs
+            type: Directory

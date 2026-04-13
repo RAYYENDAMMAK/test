@@ -2,7 +2,7 @@
 # Build and push 5G Core UI Docker image
 set -e
 
-IMAGE_NAME=${IMAGE_NAME:-"core-ui"}
+IMAGE_NAME=${IMAGE_NAME:-"5gcore-ui"}
 TAG=${TAG:-"latest"}
 
 echo "Building 5G Core UI image: ${IMAGE_NAME}:${TAG}"

@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import * as yaml from 'js-yaml';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { coreV1Api, appsV1Api, NAMESPACE, NF_NAMES, NF_CONFIG_MAP, NF_CONFIG_KEY } from '../k8s-client';
 
 const router = Router();
@@ -26,7 +28,25 @@ function setPath(obj: any, path: string, value: any): void {
   cur[last] = value;
 }
 
+/** Delete a dotted path from a nested object (mutates). */
+function deletePath(obj: any, path: string): void {
+  const keys = path.split('.');
+  let cur = obj;
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (cur == null) return;
+    cur = cur[keys[i]];
+  }
+  if (cur == null) return;
+  delete cur[keys[keys.length - 1]];
+}
+
+function deepEqual(a: any, b: any): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 const GLOBAL_CM = '5gcore-global-config';
+const NF_CONFIG_DIR = process.env.NF_CONFIG_DIR || '/var/lib/5gcore-ui/nf-configs';
+const SOURCE_CONFIGMAP_DIR = process.env.SOURCE_CONFIGMAP_DIR || '/etc/open5gs';
 
 /** Default global config — used when ConfigMap doesn't exist yet */
 const DEFAULT_GLOBAL = {
@@ -40,10 +60,87 @@ const DEFAULT_GLOBAL = {
 // Maps structured key → YAML dotted path within the NF's parsed YAML
 const NF_FIELD_PATHS: Record<string, Record<string, string>> = {
   nrf:  {
-    sbi_addr: 'nrf.sbi.0.addr',
-    sbi_port: 'nrf.sbi.0.port',
+    sbi_addr: 'nrf.sbi.server.0.address',
+    sbi_port: 'nrf.sbi.server.0.port',
     mcc:      'nrf.serving.0.plmn_id.mcc',
     mnc:      'nrf.serving.0.plmn_id.mnc',
+  },
+  ausf: {
+    sbi_addr: 'ausf.sbi.server.0.address',
+    sbi_port: 'ausf.sbi.server.0.port',
+    nrf_uri:  'ausf.sbi.client.nrf.0.uri',
+  },
+  udm:  {
+    sbi_addr: 'udm.sbi.server.0.address',
+    sbi_port: 'udm.sbi.server.0.port',
+    nrf_uri:  'udm.sbi.client.nrf.0.uri',
+  },
+  udr:  {
+    sbi_addr: 'udr.sbi.server.0.address',
+    sbi_port: 'udr.sbi.server.0.port',
+    nrf_uri:  'udr.sbi.client.nrf.0.uri',
+    db_uri:   'db_uri',
+  },
+  pcf:  {
+    sbi_addr: 'pcf.sbi.server.0.address',
+    sbi_port: 'pcf.sbi.server.0.port',
+    nrf_uri:  'pcf.sbi.client.nrf.0.uri',
+  },
+  nssf: {
+    sbi_addr: 'nssf.sbi.server.0.address',
+    sbi_port: 'nssf.sbi.server.0.port',
+    nrf_uri:  'nssf.sbi.client.nrf.0.uri',
+    sst:      'nssf.sbi.client.nsi.0.s_nssai.sst',
+    sd:       'nssf.sbi.client.nsi.0.s_nssai.sd',
+  },
+  bsf:  {
+    sbi_addr: 'bsf.sbi.server.0.address',
+    sbi_port: 'bsf.sbi.server.0.port',
+    nrf_uri:  'bsf.sbi.client.nrf.0.uri',
+  },
+  amf:  {
+    mcc:              'amf.guami.0.plmn_id.mcc',
+    mnc:              'amf.guami.0.plmn_id.mnc',
+    tac:              'amf.tai.0.tac',
+    sst:              'amf.plmn_support.0.s_nssai.0.sst',
+    sd:               'amf.plmn_support.0.s_nssai.0.sd',
+    network_name:     'amf.network_name.full',
+    amf_name:         'amf.amf_name',
+    ngap_addr:        'amf.ngap.server.0.address',
+    sbi_addr:         'amf.sbi.server.0.address',
+    sbi_port:         'amf.sbi.server.0.port',
+    nrf_uri:          'amf.sbi.client.nrf.0.uri',
+    integrity_order:  'amf.security.integrity_order',
+    ciphering_order:  'amf.security.ciphering_order',
+    t3512:            'amf.time.t3512.value',
+  },
+  smf:  {
+    sbi_addr:     'smf.sbi.server.0.address',
+    sbi_port:     'smf.sbi.server.0.port',
+    pfcp_addr:    'smf.pfcp.server.0.address',
+    upf_addr:     'smf.pfcp.client.upf.0.address',
+    ue_subnet:    'smf.session.0.subnet',
+    dnn:          'smf.session.0.dnn',
+    mtu:          'smf.mtu',
+    dns_primary:  'smf.dns.0',
+    dns_secondary:'smf.dns.1',
+    nrf_uri:      'smf.sbi.client.nrf.0.uri',
+  },
+  upf:  {
+    pfcp_addr: 'upf.pfcp.server.0.address',
+    gtpu_addr: 'upf.gtpu.server.0.address',
+    ue_subnet: 'upf.session.0.subnet',
+    dnn:       'upf.session.0.dnn',
+    tun_dev:   'upf.session.0.dev',
+  },
+};
+
+// Legacy structured paths used by older UI/backend code. These are normalized
+// into the actual Open5GS YAML schema and then removed from the document.
+const LEGACY_NF_FIELD_PATHS: Record<string, Record<string, string>> = {
+  nrf:  {
+    sbi_addr: 'nrf.sbi.0.addr',
+    sbi_port: 'nrf.sbi.0.port',
   },
   ausf: {
     sbi_addr: 'ausf.sbi.0.addr',
@@ -70,7 +167,7 @@ const NF_FIELD_PATHS: Record<string, Record<string, string>> = {
     sbi_addr: 'nssf.sbi.0.addr',
     sbi_port: 'nssf.sbi.0.port',
     nrf_uri:  'nssf.nrf.uri',
-    sst:      'nssf.sbi.0.path.0',   // simplified; NSSF slice selection is complex
+    sst:      'nssf.sbi.0.path.0',
     sd:       'nssf.nsi.0.s_nssai.sd',
   },
   bsf:  {
@@ -79,32 +176,20 @@ const NF_FIELD_PATHS: Record<string, Record<string, string>> = {
     nrf_uri:  'bsf.nrf.uri',
   },
   amf:  {
-    mcc:              'amf.guami.0.plmn_id.mcc',
-    mnc:              'amf.guami.0.plmn_id.mnc',
-    tac:              'amf.tai.0.tac',
-    sst:              'amf.plmn_support.0.s_nssai.0.sst',
-    sd:               'amf.plmn_support.0.s_nssai.0.sd',
-    network_name:     'amf.network_name.full',
-    amf_name:         'amf.amf_name',
-    ngap_addr:        'amf.ngap.0.addr',
-    sbi_addr:         'amf.sbi.0.addr',
-    sbi_port:         'amf.sbi.0.port',
-    nrf_uri:          'amf.nrf.uri',
-    integrity_order:  'amf.security.integrity_order',
-    ciphering_order:  'amf.security.ciphering_order',
-    t3512:            'amf.t3512.value',
+    ngap_addr: 'amf.ngap.0.addr',
+    sbi_addr:  'amf.sbi.0.addr',
+    sbi_port:  'amf.sbi.0.port',
+    nrf_uri:   'amf.nrf.uri',
+    t3512:     'amf.t3512.value',
   },
   smf:  {
-    sbi_addr:     'smf.sbi.0.addr',
-    sbi_port:     'smf.sbi.0.port',
-    pfcp_addr:    'smf.pfcp.0.addr',
-    upf_addr:     'upf.pfcp.0.addr',   // remote UPF node in SMF config
-    ue_subnet:    'smf.subnet.0.addr',
-    dnn:          'smf.subnet.0.dnn',
-    mtu:          'smf.mtu',
-    dns_primary:  'smf.dns.0',
-    dns_secondary:'smf.dns.1',
-    nrf_uri:      'smf.nrf.uri',
+    sbi_addr:  'smf.sbi.0.addr',
+    sbi_port:  'smf.sbi.0.port',
+    pfcp_addr: 'smf.pfcp.0.addr',
+    upf_addr:  'upf.pfcp.0.addr',
+    ue_subnet: 'smf.subnet.0.addr',
+    dnn:       'smf.subnet.0.dnn',
+    nrf_uri:   'smf.nrf.uri',
   },
   upf:  {
     pfcp_addr: 'upf.pfcp.0.addr',
@@ -114,6 +199,52 @@ const NF_FIELD_PATHS: Record<string, Record<string, string>> = {
     tun_dev:   'upf.subnet.0.dev',
   },
 };
+
+function normalizeNfConfig(name: string, obj: any): { obj: any; changed: boolean } {
+  const fieldPaths = NF_FIELD_PATHS[name] || {};
+  const legacyPaths = LEGACY_NF_FIELD_PATHS[name] || {};
+  let changed = false;
+
+  for (const [fieldKey, canonicalPath] of Object.entries(fieldPaths)) {
+    const legacyPath = legacyPaths[fieldKey];
+    if (!legacyPath || legacyPath === canonicalPath) continue;
+
+    const canonicalVal = getPath(obj, canonicalPath);
+    const legacyVal = getPath(obj, legacyPath);
+
+    if (canonicalVal === undefined && legacyVal !== undefined) {
+      setPath(obj, canonicalPath, legacyVal);
+      changed = true;
+    }
+
+    if (legacyVal !== undefined) {
+      deletePath(obj, legacyPath);
+      changed = true;
+    }
+  }
+
+  // Remove empty legacy containers left behind by older mappings.
+  const cleanupPaths = [
+    `${name}.nrf`,
+    `${name}.db_uri`,
+    `${name}.sbi.0`,
+    `${name}.ngap.0`,
+    `${name}.pfcp.0`,
+    `${name}.gtpu.0`,
+    `${name}.subnet`,
+    `${name}.nsi`,
+  ];
+
+  for (const path of cleanupPaths) {
+    const value = getPath(obj, path);
+    if (value && typeof value === 'object' && Object.keys(value).length === 0) {
+      deletePath(obj, path);
+      changed = true;
+    }
+  }
+
+  return { obj, changed };
+}
 
 /** Which structured fields correspond to global config keys, per NF */
 const GLOBAL_PROPAGATION: Record<string, Record<string, keyof typeof DEFAULT_GLOBAL>> = {
@@ -131,22 +262,79 @@ const GLOBAL_PROPAGATION: Record<string, Record<string, keyof typeof DEFAULT_GLO
 
 // ─── Helpers: read/write ConfigMap YAML ──────────────────────────────────────
 async function readNfYaml(name: string): Promise<{ obj: any; raw: string }> {
+  const filePath = path.join(NF_CONFIG_DIR, `${name}.yaml`);
+  try {
+    const raw = await fs.readFile(filePath, 'utf8');
+    const obj = yaml.load(raw) as any || {};
+    return { obj, raw };
+  } catch (err: any) {
+    if (err?.code !== 'ENOENT') throw err;
+  }
+
   const cmName = NF_CONFIG_MAP[name];
   const key    = NF_CONFIG_KEY[name];
   const cm = await coreV1Api.readNamespacedConfigMap(cmName, NAMESPACE);
   const raw = cm.body.data?.[key] || '';
   const obj = yaml.load(raw) as any || {};
+  await fs.mkdir(NF_CONFIG_DIR, { recursive: true });
+  await fs.writeFile(filePath, raw, 'utf8');
   return { obj, raw };
 }
 
-async function writeNfYaml(name: string, obj: any): Promise<void> {
+async function writeFileAtomically(filePath: string, raw: string): Promise<void> {
+  const tempPath = `${filePath}.tmp`;
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(tempPath, raw, 'utf8');
+  await fs.rename(tempPath, filePath);
+}
+
+/** Restart all pods for a given NF to pick up new ConfigMap */
+async function restartNfPods(name: string): Promise<void> {
+  const pods = await coreV1Api.listNamespacedPod(
+    NAMESPACE, undefined, undefined, undefined, undefined, `app=${name}`
+  );
+  await Promise.all(pods.body.items.map(p =>
+    coreV1Api.deleteNamespacedPod(p.metadata!.name!, NAMESPACE)
+  ));
+}
+
+async function writeNfYamlRaw(name: string, raw: string, restartPods: boolean = true): Promise<string> {
   const cmName = NF_CONFIG_MAP[name];
   const key    = NF_CONFIG_KEY[name];
-  const raw    = yaml.dump(obj, { lineWidth: 120 });
+  const filePath = path.join(NF_CONFIG_DIR, `${name}.yaml`);
+  const sourceFilePath = path.join(SOURCE_CONFIGMAP_DIR, `${name}.yaml`);
+  const parsed = yaml.load(raw) as any || {};
+  const normalized = normalizeNfConfig(name, parsed).obj;
+  const normalizedRaw = yaml.dump(normalized, { lineWidth: 120 });
+
+  // Write to local cache
+  await writeFileAtomically(filePath, normalizedRaw);
+
+  // Write to source configmap directory (/etc/open5gs)
+  try {
+    await writeFileAtomically(sourceFilePath, normalizedRaw);
+  } catch (err: any) {
+    console.error(`Failed to write source config at ${sourceFilePath}:`, err.message);
+  }
+
+  // Update ConfigMap in Kubernetes
   const cm = await coreV1Api.readNamespacedConfigMap(cmName, NAMESPACE);
   if (!cm.body.data) cm.body.data = {};
-  cm.body.data[key] = raw;
+  cm.body.data[key] = normalizedRaw;
   await coreV1Api.replaceNamespacedConfigMap(cmName, NAMESPACE, cm.body);
+
+  // Restart pods to pick up the new ConfigMap content in /etc/open5gs
+  if (restartPods) {
+    await restartNfPods(name).catch(err => {
+      console.error(`Failed to restart ${name} pods:`, err.message);
+    });
+  }
+
+  return normalizedRaw;
+}
+
+async function writeNfYaml(name: string, obj: any, restartPods: boolean = true): Promise<void> {
+  await writeNfYamlRaw(name, yaml.dump(obj, { lineWidth: 120 }), restartPods);
 }
 
 // ─── Existing routes ─────────────────────────────────────────────────────────
@@ -235,7 +423,7 @@ router.put('/global', async (req: Request, res: Response) => {
               setPath(obj, yamlPath, globalCfg[globalKey]);
             }
           }
-          await writeNfYaml(nfName, obj).catch(() => {});
+          await writeNfYaml(nfName, obj, true).catch(() => {});
         })
       );
     }
@@ -252,9 +440,14 @@ router.get('/:name/config', async (req: Request, res: Response) => {
   const cmName = NF_CONFIG_MAP[name];
   if (!cmName) return res.status(404).json({ error: 'No config for this NF' });
   try {
-    const cm  = await coreV1Api.readNamespacedConfigMap(cmName, NAMESPACE);
     const key = NF_CONFIG_KEY[name];
-    res.json({ name, configMap: cmName, key, content: cm.body.data?.[key] || '' });
+    const { obj, raw } = await readNfYaml(name);
+    const original = JSON.parse(JSON.stringify(obj || {}));
+    const normalized = normalizeNfConfig(name, obj);
+    const content = normalized.changed && !deepEqual(original, normalized.obj)
+      ? await writeNfYamlRaw(name, yaml.dump(normalized.obj, { lineWidth: 120 }))
+      : raw;
+    res.json({ name, configMap: cmName, key, content });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -263,16 +456,18 @@ router.get('/:name/config', async (req: Request, res: Response) => {
 // PUT /api/nfs/:name/config — save raw YAML
 router.put('/:name/config', async (req: Request, res: Response) => {
   const { name } = req.params;
-  const { content } = req.body;
+  const { content, restartPods } = req.body;
   const cmName = NF_CONFIG_MAP[name];
   const key    = NF_CONFIG_KEY[name];
   if (!cmName) return res.status(404).json({ error: 'No config for this NF' });
   try {
-    const cm = await coreV1Api.readNamespacedConfigMap(cmName, NAMESPACE);
-    if (!cm.body.data) cm.body.data = {};
-    cm.body.data[key] = content;
-    await coreV1Api.replaceNamespacedConfigMap(cmName, NAMESPACE, cm.body);
-    res.json({ success: true });
+    const normalizedContent = await writeNfYamlRaw(name, content, restartPods !== false);
+    res.json({
+      success: true,
+      content: normalizedContent,
+      key,
+      message: restartPods !== false ? `Config updated and ${name} pods restarting` : 'Config updated (pods not restarted)',
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -284,13 +479,22 @@ router.get('/:name/config/fields', async (req: Request, res: Response) => {
   if (!NF_CONFIG_MAP[name]) return res.status(404).json({ error: 'No config for this NF' });
   try {
     const { obj, raw } = await readNfYaml(name);
+    const original = JSON.parse(JSON.stringify(obj || {}));
+    const normalized = normalizeNfConfig(name, obj);
+    if (normalized.changed && !deepEqual(original, normalized.obj)) {
+      await writeNfYaml(name, normalized.obj);
+    }
     const paths  = NF_FIELD_PATHS[name] || {};
     const fields: Record<string, any> = {};
     for (const [fieldKey, path] of Object.entries(paths)) {
-      const val = getPath(obj, path);
+      const val = getPath(normalized.obj, path);
       if (val !== undefined) fields[fieldKey] = val;
     }
-    res.json({ name, fields, yaml: raw });
+    res.json({
+      name,
+      fields,
+      yaml: normalized.changed ? yaml.dump(normalized.obj, { lineWidth: 120 }) : raw,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -309,7 +513,7 @@ router.put('/:name/config/fields', async (req: Request, res: Response) => {
       if (path) setPath(obj, path, value);
     }
     await writeNfYaml(name, obj);
-    res.json({ success: true, updated: Object.keys(fields).length });
+    res.json({ success: true, updated: Object.keys(fields).length, message: `Config updated and ${name} pods restarting` });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
