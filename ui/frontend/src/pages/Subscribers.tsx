@@ -185,21 +185,19 @@ export default function Subscribers() {
               <div className="grid grid-cols-2 gap-4">
                 <Field label="IMSI" value={formData.imsi}
                   onChange={v => setFormData((f: any) => ({ ...f, imsi: v }))}
-                  disabled={modal === 'edit'} placeholder="001010000000001" />
+                  disabled={modal === 'edit'} placeholder="605010000000001" />
                 <Field label="MSISDN" value={formData.msisdn?.[0] || ''}
                   onChange={v => setFormData((f: any) => ({ ...f, msisdn: v ? [v] : [] }))}
-                  placeholder="optional" />
+                  placeholder="51314715" />
               </div>
 
               <div className="border-t border-gray-800 pt-4">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Security</div>
                 <div className="grid grid-cols-1 gap-3">
-                  <Field label="Ki (128-bit hex)" value={formData.security?.k || ''}
-                    onChange={v => setFormData((f: any) => ({ ...f, security: { ...f.security, k: v } }))}
-                    placeholder="465B5CE8B199B49FAA5F0A2EE238A6BC" mono />
-                  <Field label="OPc (128-bit hex)" value={formData.security?.opc || ''}
-                    onChange={v => setFormData((f: any) => ({ ...f, security: { ...f.security, opc: v } }))}
-                    placeholder="E8ED289DEBA952E4283B54E88E6183CA" mono />
+                  <Field label="Ki (128-bit hex)" value="465B5CE8 B199B49F AA5F0A2E E238A6BC"
+                     mono />
+                  <Field label="OPc (128-bit hex)" value="E8ED289D EBA952E4 283B54E8 8E6183CA"
+                     mono />
                   <Field label="AMF" value={formData.security?.amf || '8000'}
                     onChange={v => setFormData((f: any) => ({ ...f, security: { ...f.security, amf: v } }))}
                     placeholder="8000" mono />
@@ -209,10 +207,10 @@ export default function Subscribers() {
               <div className="border-t border-gray-800 pt-4">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">AMBR</div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Downlink (Mbps)" type="number"
+                  <Field label="Downlink (Gbps)" type="number"
                     value={String(formData.ambr?.downlink?.value || 1)}
                     onChange={v => setFormData((f: any) => ({ ...f, ambr: { ...f.ambr, downlink: { value: Number(v), unit: 3 } } }))} />
-                  <Field label="Uplink (Mbps)" type="number"
+                  <Field label="Uplink (Gbps)" type="number"
                     value={String(formData.ambr?.uplink?.value || 1)}
                     onChange={v => setFormData((f: any) => ({ ...f, ambr: { ...f.ambr, uplink: { value: Number(v), unit: 3 } } }))} />
                 </div>

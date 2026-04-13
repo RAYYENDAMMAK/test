@@ -30,7 +30,7 @@ const GLOBAL_CM = '5gcore-global-config';
 
 /** Default global config — used when ConfigMap doesn't exist yet */
 const DEFAULT_GLOBAL = {
-  mcc: '001', mnc: '01', tac: 1, sst: 1, sd: '000001',
+  mcc: '605', mnc: '01', tac: 1, sst: 1, sd: '000001',
   nrfUri: 'http://nrf-svc:7777',
   mongoUri: 'mongodb://mongodb-svc:27017/open5gs',
   logLevel: 'info',

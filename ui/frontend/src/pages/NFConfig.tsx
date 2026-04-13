@@ -172,11 +172,11 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
 const NF_LIST = ['nrf','ausf','udm','udr','pcf','nssf','bsf','amf','smf','upf'];
 
 const DEFAULT_GLOBAL: GlobalConfig = {
-  mcc: '001', mnc: '01', tac: 1, sst: 1, sd: '000001',
+  mcc: '605', mnc: '01', tac: 1, sst: 1, sd: '000001',
   nrfUri: 'http://nrf-svc:7777',
   mongoUri: 'mongodb://mongodb-svc:27017/open5gs',
   logLevel: 'info',
-  networkName: 'IEEE5GTestbed',
+  networkName: '5G SA PRIVATE NETWORK',
 };
 
 const MOCK_FIELDS: Record<string, Record<string, any>> = {
@@ -187,7 +187,7 @@ const MOCK_FIELDS: Record<string, Record<string, any>> = {
   pcf:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
   nssf: { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777', sst:1, sd:'000001' },
   bsf:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
-  amf:  { mcc:'001', mnc:'01', tac:1, sst:1, sd:'000001', network_name:'IEEE5GTestbed', amf_name:'open5gs-amf0',
+  amf:  { mcc:'605', mnc:'01', tac:1, sst:1, sd:'000001', network_name:'5G SA PRIVATE NETWORK', amf_name:'open5gs-amf0',
           ngap_addr:'0.0.0.0', sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777',
           integrity_order:['NIA2','NIA1','NIA0'], ciphering_order:['NEA0','NEA2','NEA1'], t3512:540 },
   smf:  { sbi_addr:'0.0.0.0', sbi_port:7777, pfcp_addr:'0.0.0.0', upf_addr:'upf-svc',
@@ -361,7 +361,7 @@ function GlobalPanel({
           <div>
             <label className="block text-xs text-gray-400 mb-1.5">MCC <span className="text-gray-600">(3 digits)</span></label>
             <input value={config.mcc} onChange={e => onChange('mcc', e.target.value)}
-              className={inp} placeholder="001" maxLength={3} />
+              className={inp} placeholder="605" maxLength={3} />
           </div>
           <div>
             <label className="block text-xs text-gray-400 mb-1.5">MNC <span className="text-gray-600">(2–3 digits)</span></label>
@@ -378,7 +378,7 @@ function GlobalPanel({
               Network Name <span className="text-gray-600">(broadcast to UEs on network selection)</span>
             </label>
             <input value={config.networkName} onChange={e => onChange('networkName', e.target.value)}
-              className={inp} placeholder="IEEE5GTestbed" />
+              className={inp} placeholder="5G SA PRIVATE NETWORK" />
             <p className="text-[10px] text-gray-600 mt-1">Propagated to AMF — shown on UE network selection screen</p>
           </div>
         </div>
