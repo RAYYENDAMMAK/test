@@ -52,7 +52,7 @@ const SOURCE_CONFIGMAP_DIR = process.env.SOURCE_CONFIGMAP_DIR || '/etc/open5gs';
 const DEFAULT_GLOBAL = {
   mcc: '605', mnc: '01', tac: 1, sst: 1, sd: '000001',
   nrfUri: 'http://nrf-svc:7777',
-  mongoUri: 'mongodb://mongodb-svc:27017/open5gs',
+  mongoUri: 'mongodb://192.168.1.102:27017/open5gs',
   logLevel: 'info',
 };
 

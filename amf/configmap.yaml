@@ -21,7 +21,7 @@ data:
             port: 7777
         client:
           nrf:
-            - uri: http://nrf-svc:7777
+            - uri: http://nrf-svc.open5gs.svc.cluster.local:7777
       ngap:
         server:
           - address: 0.0.0.0

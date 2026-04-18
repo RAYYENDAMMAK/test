@@ -17,16 +17,17 @@ data:
             port: 7777
         client:
           nrf:
-            - uri: http://nrf-svc:7777
+            - uri: http://${NRF_IP}:7777
       serving:
         - plmn_id:
             mcc: "999"
             mnc: "70"
 
-    db_uri: mongodb://mongodb-svc/open5gs
+    db_uri: mongodb://192.168.1.102/open5gs
   run.sh: |
     #!/bin/sh
     set -eu
     : "${POD_IP:?POD_IP is required}"
-    sed "s/\${POD_IP}/${POD_IP}/g" /etc/open5gs/udr.yaml.in > /tmp/udr.yaml
+    NRF_IP="$(getent ahostsv4 nrf-svc | awk 'NR==1 {print $1}')"
+    sed "s/\${POD_IP}/${POD_IP}/g; s/\${NRF_IP}/${NRF_IP}/g" /etc/open5gs/udr.yaml.in > /tmp/udr.yaml
     exec open5gs-udrd -c /tmp/udr.yaml

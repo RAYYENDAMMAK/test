@@ -22,7 +22,7 @@ data:
             port: 7777
         client:
           nrf:
-            - uri: http://nrf-svc:7777
+            - uri: http://${NRF_IP}:7777
       pfcp:
         server:
           - address: 0.0.0.0
@@ -40,18 +40,18 @@ data:
           - address: 0.0.0.0
             port: 9090
       session:
-        - subnet: 10.45.0.1/16
+        - subnet: 10.45.0.0/16
           gateway: 10.45.0.1
           dnn: internet
-          default_indicator: true
       dns:
         - 8.8.8.8
         - 8.8.4.4
       mtu: 1400
-      freeDiameter: /etc/freeDiameter/smf.conf
+#      freeDiameter: /etc/freeDiameter/smf.conf
   run.sh: |
     #!/bin/sh
     set -eu
     : "${POD_IP:?POD_IP is required}"
-    sed "s/\${POD_IP}/${POD_IP}/g" /etc/open5gs/smf.yaml.in > /tmp/smf.yaml
+    NRF_IP="$(getent ahostsv4 nrf-svc | awk 'NR==1 {print $1}')"
+    sed "s/\${POD_IP}/${POD_IP}/g; s/\${NRF_IP}/${NRF_IP}/g" /etc/open5gs/smf.yaml.in > /tmp/smf.yaml
     exec open5gs-smfd -c /tmp/smf.yaml

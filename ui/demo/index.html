@@ -1016,13 +1016,13 @@ function buildNFTable() {
 }
 
 // ── NF Config Enhanced System ──────────────────────────────────────────────────
-const NFC_G = { mcc:'001', mnc:'01', tac:1, sst:1, sd:'000001', nrfUri:'http://nrf-svc:7777', mongoUri:'mongodb://mongodb-svc:27017/open5gs', logLevel:'info', networkName:'IEEE5GTestbed' };
+const NFC_G = { mcc:'001', mnc:'01', tac:1, sst:1, sd:'000001', nrfUri:'http://nrf-svc:7777', mongoUri:'mongodb://192.168.1.102:27017/open5gs', logLevel:'info', networkName:'IEEE5GTestbed' };
 let NFC_SEL = 'global', NFC_VIEW = 'form', NFC_DIRTY = false;
 const NFC_FIELDS = {
   nrf:  { sbi_addr:'0.0.0.0', sbi_port:7777, mcc:'001', mnc:'01' },
   ausf: { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
   udm:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
-  udr:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777', db_uri:'mongodb://mongodb-svc:27017/open5gs' },
+  udr:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777', db_uri:'mongodb://192.168.1.102:27017/open5gs' },
   pcf:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
   nssf: { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777', sst:1, sd:'000001' },
   bsf:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
@@ -1550,7 +1550,7 @@ function nfcGlobalHTML(){
     </div>
     <div style="display:flex;flex-direction:column;gap:12px;">
       <div><label style="display:block;font-size:11px;color:#9ca3af;margin-bottom:6px;">NRF URI</label>${inp('nrfUri',{placeholder:'http://nrf-svc:7777'})}<p style="font-size:10px;color:#374151;margin:4px 0 0;">All NFs register to this NRF endpoint</p></div>
-      <div><label style="display:block;font-size:11px;color:#9ca3af;margin-bottom:6px;">MongoDB URI</label>${inp('mongoUri',{placeholder:'mongodb://mongodb-svc:27017/open5gs'})}<p style="font-size:10px;color:#374151;margin:4px 0 0;">Used by UDR for subscriber data storage</p></div>
+      <div><label style="display:block;font-size:11px;color:#9ca3af;margin-bottom:6px;">MongoDB URI</label>${inp('mongoUri',{placeholder:'mongodb://192.168.1.102:27017/open5gs'})}<p style="font-size:10px;color:#374151;margin:4px 0 0;">Used by UDR for subscriber data storage</p></div>
     </div>
   </div>
   <div class="card" style="padding:20px;margin-bottom:14px;">

@@ -4,7 +4,7 @@ metadata:
   name: bsf-config
   namespace: open5gs
 data:
-  bsf.yaml: |
+  bsf.yaml.in: |
     logger:
       file:
         path: /var/log/open5gs/bsf.log
@@ -12,17 +12,18 @@ data:
 
     bsf:
       sbi:
-        dev: eth0
-        advertise_name: bsf-svc.open5gs.svc.cluster.local
         server:
-          - address: 0.0.0.0
+          - address: ${POD_IP}
             port: 7777
         client:
           nrf:
-            - uri: http://nrf-svc:7777
-      serving:
-        - plmn_id:
-            mcc: "999"
-            mnc: "70"
+            - uri: http://${NRF_IP}:7777
 
-    db_uri: mongodb://mongodb-svc/open5gs
+    db_uri: mongodb://192.168.1.102/open5gs
+  run.sh: |
+    #!/bin/sh
+    set -eu
+    : "${POD_IP:?POD_IP is required}"
+    NRF_IP="$(getent ahostsv4 nrf-svc | awk 'NR==1 {print $1}')"
+    sed "s/\${POD_IP}/${POD_IP}/g; s/\${NRF_IP}/${NRF_IP}/g" /etc/open5gs/bsf.yaml.in > /tmp/bsf.yaml
+    exec open5gs-bsfd -c /tmp/bsf.yaml

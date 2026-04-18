@@ -17,14 +17,15 @@ data:
             port: 7777
         client:
           nrf:
-            - uri: http://nrf-svc:7777
-      nsi:
-        - uri: http://nrf-svc:7777
-          s_nssai:
-            sst: 1
+            - uri: http://${NRF_IP}:7777
+          nsi:
+            - uri: http://${NRF_IP}:7777
+              s_nssai:
+                sst: 1
   run.sh: |
     #!/bin/sh
     set -eu
     : "${POD_IP:?POD_IP is required}"
-    sed "s/\${POD_IP}/${POD_IP}/g" /etc/open5gs/nssf.yaml.in > /tmp/nssf.yaml
+    NRF_IP="$(getent ahostsv4 nrf-svc | awk 'NR==1 {print $1}')"
+    sed "s/\${POD_IP}/${POD_IP}/g; s/\${NRF_IP}/${NRF_IP}/g" /etc/open5gs/nssf.yaml.in > /tmp/nssf.yaml
     exec open5gs-nssfd -c /tmp/nssf.yaml

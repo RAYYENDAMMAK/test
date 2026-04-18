@@ -75,7 +75,7 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
     { section: 'Database', icon: <Database size={13} />, fields: [
-      { key: 'db_uri', label: 'MongoDB URI', type: 'text', fromGlobal: 'mongoUri', placeholder: 'mongodb://mongodb-svc:27017/open5gs', hint: 'Subscriber data store' },
+      { key: 'db_uri', label: 'MongoDB URI', type: 'text', fromGlobal: 'mongoUri', placeholder: 'mongodb://192.168.1.102:27017/open5gs', hint: 'Subscriber data store' },
     ]},
     { section: 'NRF Discovery', icon: <Link size={13} />, fields: [
       { key: 'nrf_uri', label: 'NRF URI', type: 'text', fromGlobal: 'nrfUri', placeholder: 'http://nrf-svc:7777' },
@@ -174,7 +174,7 @@ const NF_LIST = ['nrf','ausf','udm','udr','pcf','nssf','bsf','amf','smf','upf'];
 const DEFAULT_GLOBAL: GlobalConfig = {
   mcc: '605', mnc: '01', tac: 1, sst: 1, sd: '000001',
   nrfUri: 'http://nrf-svc:7777',
-  mongoUri: 'mongodb://mongodb-svc:27017/open5gs',
+  mongoUri: 'mongodb://192.168.1.102:27017/open5gs',
   logLevel: 'info',
   networkName: '5G SA PRIVATE NETWORK',
 };
@@ -183,7 +183,7 @@ const MOCK_FIELDS: Record<string, Record<string, any>> = {
   nrf:  { sbi_addr:'0.0.0.0', sbi_port:7777, mcc:'001', mnc:'01' },
   ausf: { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
   udm:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
-  udr:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777', db_uri:'mongodb://mongodb-svc:27017/open5gs' },
+  udr:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777', db_uri:'mongodb://192.168.1.102:27017/open5gs' },
   pcf:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
   nssf: { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777', sst:1, sd:'000001' },
   bsf:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
@@ -423,7 +423,7 @@ function GlobalPanel({
           <div>
             <label className="block text-xs text-gray-400 mb-1.5">MongoDB URI</label>
             <input value={config.mongoUri} onChange={e => onChange('mongoUri', e.target.value)}
-              className={inp} placeholder="mongodb://mongodb-svc:27017/open5gs" />
+              className={inp} placeholder="mongodb://192.168.1.102:27017/open5gs" />
             <p className="text-[10px] text-gray-600 mt-1">Used by UDR (subscriber data)</p>
           </div>
         </div>

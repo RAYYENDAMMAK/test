@@ -1,0 +1,6 @@
+sudo kubectl get pods -n open5gs
+check ue logs :sudo kubectl logs <ue-pod-name> -n open5gs
+Check if the AMF pod is running and healthy: sudo kubectl get pods -n open5gs | grep amf
+Check if the AMF service exists:  sudo kubectl get svc -n open5gs | grep amf
+Check logs of the AMF pod for errors: sudo kubectl logs <amf-pod-name> -n open5gs
+

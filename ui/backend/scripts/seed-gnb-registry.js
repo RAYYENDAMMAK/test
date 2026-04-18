@@ -4,7 +4,7 @@
  * proper indexes, and optionally seeds initial gNB entries.
  *
  * Usage:
- *   MONGO_URI=mongodb://mongodb-svc:27017/open5gs node scripts/seed-gnb-registry.js
+ *   MONGO_URI=mongodb://192.168.1.102:27017/open5gs node scripts/seed-gnb-registry.js
  *   # or with default URI:
  *   node scripts/seed-gnb-registry.js
  */
