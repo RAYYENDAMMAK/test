@@ -4,7 +4,7 @@ metadata:
   name: udr-config
   namespace: open5gs
 data:
-  udr.yaml: |
+  udr.yaml.in: |
     logger:
       file:
         path: /var/log/open5gs/udr.log
@@ -13,14 +13,20 @@ data:
     udr:
       sbi:
         server:
-          - address: 0.0.0.0
+          - address: ${POD_IP}
             port: 7777
         client:
           nrf:
             - uri: http://nrf-svc:7777
       serving:
         - plmn_id:
-            mcc: "001"
-            mnc: "01"
+            mcc: "999"
+            mnc: "70"
 
     db_uri: mongodb://mongodb-svc/open5gs
+  run.sh: |
+    #!/bin/sh
+    set -eu
+    : "${POD_IP:?POD_IP is required}"
+    sed "s/\${POD_IP}/${POD_IP}/g" /etc/open5gs/udr.yaml.in > /tmp/udr.yaml
+    exec open5gs-udrd -c /tmp/udr.yaml

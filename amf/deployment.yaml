@@ -27,7 +27,12 @@ spec:
         - name: amf
           image: open5gs:local
           imagePullPolicy: Never
-          command: ["open5gs-amfd", "-c", "/etc/open5gs/amf.yaml"]
+          command: ["/bin/sh", "/etc/open5gs/run.sh"]
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           ports:
             - name: sbi
               containerPort: 7777
@@ -38,8 +43,7 @@ spec:
               containerPort: 9090
           volumeMounts:
             - name: amf-config
-              mountPath: /etc/open5gs/amf.yaml
-              subPath: amf.yaml
+              mountPath: /etc/open5gs
           resources:
             requests:
               memory: "128Mi"

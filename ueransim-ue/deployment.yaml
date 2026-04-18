@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ueransim-ue
+  namespace: open5gs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ueransim-ue
+  template:
+    metadata:
+      labels:
+        app: ueransim-ue
+    spec:
+      containers:
+        - name: ue
+          image: ueransim:local
+          imagePullPolicy: Never
+          command: ["/bin/sh", "/etc/ueransim/run-ue.sh"]
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+          volumeMounts:
+            - name: ue-config
+              mountPath: /etc/ueransim
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      volumes:
+        - name: ue-config
+          configMap:
+            name: ueransim-ue-config
+            defaultMode: 0755
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice

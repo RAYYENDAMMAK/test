@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ueransim-gnb-config
+  namespace: open5gs
+data:
+  gnb-template.yaml: |
+    mcc: '999'
+    mnc: '70'
+
+    nci: '0x000000010'
+    idLength: 32
+    tac: 1
+
+    linkIp: ${GNB_POD_IP}
+    ngapIp: ${GNB_POD_IP}
+    gtpIp: ${GNB_POD_IP}
+
+    amfConfigs:
+      - address: ${AMF_SERVICE_IP}
+        port: 38412
+
+    slices:
+      - sst: 1
+
+    ignoreStreamIds: true
+  run-gnb.sh: |
+    #!/bin/sh
+    set -eu
+
+    : "${POD_IP:?POD_IP is required}"
+
+    AMF_SERVICE_IP="$(getent ahostsv4 amf-svc.open5gs.svc.cluster.local | awk 'NR==1 {print $1}')"
+
+    if [ -z "${AMF_SERVICE_IP}" ]; then
+      echo "Failed to resolve amf-svc.open5gs.svc.cluster.local" >&2
+      exit 1
+    fi
+
+    export GNB_POD_IP="${POD_IP}"
+    export AMF_SERVICE_IP
+
+    envsubst < /etc/ueransim/gnb-template.yaml > /tmp/gnb.yaml
+
+    exec nr-gnb -c /tmp/gnb.yaml -l

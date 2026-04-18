@@ -10,6 +10,10 @@ data:
         path: /var/log/open5gs/upf.log
       level: info
 
+    global:
+      max:
+        ue: 1024
+
     upf:
       pfcp:
         server:
@@ -20,8 +24,9 @@ data:
       session:
         - subnet: 10.45.0.1/16
           gateway: 10.45.0.1
-          dnn: internet
-          dev: ogstun
+        - subnet: 2001:db8:cafe::/48
+          gateway: 2001:db8:cafe::1
+          
       metrics:
         server:
           - address: 0.0.0.0

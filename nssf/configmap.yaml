@@ -4,7 +4,7 @@ metadata:
   name: nssf-config
   namespace: open5gs
 data:
-  nssf.yaml: |
+  nssf.yaml.in: |
     logger:
       file:
         path: /var/log/open5gs/nssf.log
@@ -13,13 +13,18 @@ data:
     nssf:
       sbi:
         server:
-          - address: 0.0.0.0
+          - address: ${POD_IP}
             port: 7777
         client:
           nrf:
             - uri: http://nrf-svc:7777
-          nsi:
-            - uri: http://nrf-svc:7777
-              s_nssai:
-                sst: 1
-                sd: "000001"
+      nsi:
+        - uri: http://nrf-svc:7777
+          s_nssai:
+            sst: 1
+  run.sh: |
+    #!/bin/sh
+    set -eu
+    : "${POD_IP:?POD_IP is required}"
+    sed "s/\${POD_IP}/${POD_IP}/g" /etc/open5gs/nssf.yaml.in > /tmp/nssf.yaml
+    exec open5gs-nssfd -c /tmp/nssf.yaml

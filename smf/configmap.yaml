@@ -4,16 +4,21 @@ metadata:
   name: smf-config
   namespace: open5gs
 data:
-  smf.yaml: |
+  smf.yaml.in: |
     logger:
       file:
         path: /var/log/open5gs/smf.log
       level: info
 
     smf:
+      info:
+        - s_nssai:
+            - sst: 1
+              dnn:
+                - internet
       sbi:
         server:
-          - address: 0.0.0.0
+          - address: ${POD_IP}
             port: 7777
         client:
           nrf:
@@ -38,8 +43,15 @@ data:
         - subnet: 10.45.0.1/16
           gateway: 10.45.0.1
           dnn: internet
+          default_indicator: true
       dns:
         - 8.8.8.8
         - 8.8.4.4
       mtu: 1400
       freeDiameter: /etc/freeDiameter/smf.conf
+  run.sh: |
+    #!/bin/sh
+    set -eu
+    : "${POD_IP:?POD_IP is required}"
+    sed "s/\${POD_IP}/${POD_IP}/g" /etc/open5gs/smf.yaml.in > /tmp/smf.yaml
+    exec open5gs-smfd -c /tmp/smf.yaml

@@ -44,6 +44,11 @@ resources:
   - upf/configmap.yaml
   - upf/deployment.yaml
   - upf/service.yaml
+  - ueransim-gnb/configmap.yaml
+  - ueransim-gnb/service.yaml
+  - ueransim-gnb/statefulset.yaml
+  - ueransim-ue/configmap.yaml
+  - ueransim-ue/deployment.yaml
   # Open5GS WebUI — commented out; use the custom dashboard instead
   # - webui/deployment.yaml
   # - webui/service.yaml

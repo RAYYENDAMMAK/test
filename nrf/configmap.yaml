@@ -4,7 +4,7 @@ metadata:
   name: nrf-config
   namespace: open5gs
 data:
-  nrf.yaml: |
+  nrf.yaml.in: |
     logger:
       file:
         path: /var/log/open5gs/nrf.log
@@ -17,9 +17,15 @@ data:
     nrf:
       serving:
         - plmn_id:
-            mcc: "001"
-            mnc: "01"
+            mcc: "999"
+            mnc: "70"
       sbi:
         server:
-          - address: 0.0.0.0
+          - address: ${POD_IP}
             port: 7777
+  run.sh: |
+    #!/bin/sh
+    set -eu
+    : "${POD_IP:?POD_IP is required}"
+    sed "s/\${POD_IP}/${POD_IP}/g" /etc/open5gs/nrf.yaml.in > /tmp/nrf.yaml
+    exec open5gs-nrfd -c /tmp/nrf.yaml

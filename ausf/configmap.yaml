@@ -4,7 +4,7 @@ metadata:
   name: ausf-config
   namespace: open5gs
 data:
-  ausf.yaml: |
+  ausf.yaml.in: |
     logger:
       file:
         path: /var/log/open5gs/ausf.log
@@ -13,12 +13,18 @@ data:
     ausf:
       sbi:
         server:
-          - address: 0.0.0.0
+          - address: ${POD_IP}
             port: 7777
         client:
           nrf:
             - uri: http://nrf-svc:7777
       serving:
         - plmn_id:
-            mcc: "001"
-            mnc: "01"
+            mcc: "999"
+            mnc: "70"
+  run.sh: |
+    #!/bin/sh
+    set -eu
+    : "${POD_IP:?POD_IP is required}"
+    sed "s/\${POD_IP}/${POD_IP}/g" /etc/open5gs/ausf.yaml.in > /tmp/ausf.yaml
+    exec open5gs-ausfd -c /tmp/ausf.yaml

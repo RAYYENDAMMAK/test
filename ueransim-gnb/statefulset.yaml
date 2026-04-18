@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ueransim-gnb
+  namespace: open5gs
+spec:
+  serviceName: ueransim-gnb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ueransim-gnb
+  template:
+    metadata:
+      labels:
+        app: ueransim-gnb
+    spec:
+      containers:
+        - name: gnb
+          image: ueransim:local
+          imagePullPolicy: Never
+          command: ["/bin/sh", "/etc/ueransim/run-gnb.sh"]
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          ports:
+            - name: rls
+              containerPort: 4997
+              protocol: UDP
+            - name: gtpu
+              containerPort: 2152
+              protocol: UDP
+          volumeMounts:
+            - name: gnb-config
+              mountPath: /etc/ueransim
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      volumes:
+        - name: gnb-config
+          configMap:
+            name: ueransim-gnb-config
+            defaultMode: 0755

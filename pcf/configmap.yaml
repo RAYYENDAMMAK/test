@@ -12,6 +12,8 @@ data:
 
     pcf:
       sbi:
+        dev: eth0
+        advertise_name: pcf-svc.open5gs.svc.cluster.local
         server:
           - address: 0.0.0.0
             port: 7777
@@ -20,7 +22,7 @@ data:
             - uri: http://nrf-svc:7777
       serving:
         - plmn_id:
-            mcc: "001"
-            mnc: "01"
+            mcc: "999"
+            mnc: "70"
 
     db_uri: mongodb://mongodb-svc/open5gs

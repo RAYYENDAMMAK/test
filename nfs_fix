@@ -1,0 +1,15 @@
+Next Steps to Apply the Fix                                                                                                                                                                 
+                                                                                                                                                                                              
+  # Rebuild backend                                                                                                                                                                           
+  cd ui/backend && sudo npm run build                                                                                                                                                         
+                                                                                                                                                                                              
+  # Rebuild and reload UI image                                                                                                                                                               
+  cd ../..                                                                                                                                                                                    
+  docker save 5gcore-ui:latest -o /tmp/ui.tar                                                                                                                                                 
+  sudo k3s ctr images import /tmp/ui.tar                                                                                                                                                      
+                                                                                                                                                                                              
+  # Apply updated deployment                                                                                                                                                                  
+  sudo kubectl apply -f ui/k8s/deployment.yaml                                                                                                                                                
+                                                                                                                                                                                              
+  # Restart UI pod                                                                                                                                                                            
+  sudo kubectl rollout restart deployment/core-ui -n open5gs     
