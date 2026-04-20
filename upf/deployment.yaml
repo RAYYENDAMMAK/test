@@ -63,7 +63,12 @@ spec:
         - name: upf
           image: open5gs:local
           imagePullPolicy: Never
-          command: ["open5gs-upfd", "-c", "/etc/open5gs/upf.yaml"]
+          command: ["/bin/sh", "/etc/open5gs/run.sh"]
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           ports:
             - name: pfcp
               containerPort: 8805
@@ -80,8 +85,7 @@ spec:
                 - NET_ADMIN
           volumeMounts:
             - name: upf-config
-              mountPath: /etc/open5gs/upf.yaml
-              subPath: upf.yaml
+              mountPath: /etc/open5gs
             - name: dev-net-tun
               mountPath: /dev/net/tun
           resources:
