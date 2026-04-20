@@ -17,10 +17,10 @@ data:
     upf:
       pfcp:
         server:
-          - address: 0.0.0.0
+          - address: ${POD_IP}
       gtpu:
         server:
-          - address: 0.0.0.0
+          - address: ${POD_IP}
       session:
         - subnet: 10.45.0.1/16
           gateway: 10.45.0.1
@@ -29,7 +29,7 @@ data:
           
       metrics:
         server:
-          - address: 0.0.0.0
+          - address: ${POD_IP}
             port: 9090
   run.sh: |
     #!/bin/sh

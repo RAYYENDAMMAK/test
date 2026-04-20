@@ -23,7 +23,7 @@ data:
             mcc: "999"
             mnc: "70"
 
-    db_uri: mongodb://192.168.1.102/open5gs
+    db_uri: mongodb://mongodb-svc.open5gs.svc.cluster.local/open5gs
   run.sh: |
     #!/bin/sh
     set -eu
