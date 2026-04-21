@@ -1,14 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-#  Multus CNI — Thick Plugin  (k3s-compatible)
-#  Source: k8snetworkplumbingwg/multus-cni  v4.1
-#
-#  k3s uses non-standard CNI paths — this DaemonSet mounts them correctly:
-#    CNI bin  : /var/lib/rancher/k3s/data/current/bin
-#    CNI conf : /var/lib/rancher/k3s/agent/etc/cni/net.d
-#
-#  After applying, verify:
-#    kubectl -n kube-system get pods -l app=multus
-#    kubectl get network-attachment-definitions -n open5gs
+#  Multus CNI — Thick Plugin (k3s-compatible)
 # ─────────────────────────────────────────────────────────────────────────────
 ---
 apiVersion: apiextensions.k8s.io/v1
@@ -42,7 +33,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: multus
-  namespace: kube-system
+  namespace: open5gs
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -70,33 +61,33 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: multus
-    namespace: kube-system
+    namespace: open5gs
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: multus-daemon-config
-  namespace: kube-system
+  namespace: open5gs
 data:
   daemon-config.json: |
     {
-      "chrootDir":          "/hostroot",
-      "confDir":            "/host/etc/cni/net.d",
-      "logToStderr":        true,
-      "logLevel":           "verbose",
-      "logFile":            "/tmp/multus.log",
-      "binDir":             "/host/opt/cni/bin",
-      "cniConfigDir":       "/host/etc/cni/net.d",
-      "multusAutoconfigDir":"/host/etc/cni/net.d",
-      "multusConfigFile":   "auto",
-      "socketDir":          "/host/run/multus/"
+      "chrootDir": "/hostroot",
+      "confDir": "/host/etc/cni/net.d",
+      "logToStderr": true,
+      "logLevel": "verbose",
+      "logFile": "/tmp/multus.log",
+      "binDir": "/host/opt/cni/bin",
+      "cniConfigDir": "/host/etc/cni/net.d",
+      "multusAutoconfigDir": "/host/etc/cni/net.d",
+      "multusConfigFile": "auto",
+      "socketDir": "/host/run/multus/"
     }
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: kube-multus-ds
-  namespace: kube-system
+  namespace: open5gs
   labels:
     app: multus
     tier: node
@@ -118,7 +109,6 @@ spec:
           effect: NoSchedule
       serviceAccountName: multus
       initContainers:
-        # Copy Multus binary to k3s CNI bin path
         - name: install-multus-binary
           image: ghcr.io/k8snetworkplumbingwg/multus-cni:v4.1.0-thick
           command:
@@ -126,7 +116,9 @@ spec:
             - /usr/src/multus-cni/bin/multus-shim
             - /host/opt/cni/bin/multus-shim
           resources:
-            requests: { cpu: 10m, memory: 15Mi }
+            requests:
+              cpu: 10m
+              memory: 15Mi
           securityContext:
             privileged: true
           volumeMounts:
@@ -137,12 +129,14 @@ spec:
           image: ghcr.io/k8snetworkplumbingwg/multus-cni:v4.1.0-thick
           command: ["/usr/src/multus-cni/bin/multus-daemon"]
           args:
-            - "--multus-conf-file=auto"
-            - "--cni-conf-dir=/host/etc/cni/net.d"
-            - "--multus-log-level=verbose"
+            - "-config=/etc/cni/net.d/multus.d/daemon-config.json"
           resources:
-            requests: { cpu: 100m, memory: 50Mi }
-            limits:   { cpu: 100m, memory: 50Mi }
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 50Mi
           securityContext:
             privileged: true
           volumeMounts:
@@ -163,11 +157,9 @@ spec:
         - name: run
           hostPath:
             path: /run
-        # k3s stores CNI configs here
         - name: cni-conf
           hostPath:
             path: /var/lib/rancher/k3s/agent/etc/cni/net.d
-        # k3s CNI binaries live here
         - name: cnibin
           hostPath:
             path: /var/lib/rancher/k3s/data/current/bin

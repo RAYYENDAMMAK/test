@@ -30,7 +30,7 @@ spec:
             - name: K8S_NAMESPACE
               value: open5gs
             - name: MONGO_URI
-              value: mongodb://192.168.1.102:27017/open5gs
+              value: mongodb://mongodb-svc:27017/open5gs
             - name: PROMETHEUS_URL
               value: http://prometheus-svc:9090
             - name: GRAFANA_URL

@@ -22,7 +22,7 @@ data:
 
     slices:
       - sst: 1
-
+        sd: '000001'
     ignoreStreamIds: true
   run-gnb.sh: |
     #!/bin/sh

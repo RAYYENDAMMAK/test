@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://192.168.1.102:27017/open5gs';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongodb-svc:27017/open5gs';
 
 let connected = false;
 
