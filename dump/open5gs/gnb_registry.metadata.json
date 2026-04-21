@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"gnbId":{"$numberInt":"1"}},"name":"gnbId_1","background":true,"unique":true}],"uuid":"09d5501026824094a16479577d57afd8","collectionName":"gnb_registry","type":"collection"}

@@ -55,6 +55,7 @@ resources:
   - ui/k8s/rbac.yaml
   - ui/k8s/deployment.yaml
   - ui/k8s/service.yaml
+  - ui/k8s/ingress.yaml
   - ui/k8s/prometheus.yaml
   - ui/k8s/grafana.yaml
   - ui/k8s/grafana-dashboards.yaml
