@@ -1,0 +1,14 @@
+logger:
+  file:
+    path: /var/log/open5gs/scp.log
+global:
+  max:
+    ue: 1024
+scp:
+  sbi:
+    server:
+      - address: ${POD_IP}
+        port: 7777
+    client:
+      nrf:
+        - uri: http://nrf-svc:7777

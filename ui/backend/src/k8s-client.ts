@@ -35,15 +35,15 @@ export const NF_CONFIG_MAP: Record<string, string> = {
 };
 
 export const NF_CONFIG_KEY: Record<string, string> = {
-  nrf: 'nrf.yaml',
-  ausf: 'ausf.yaml',
-  udm: 'udm.yaml',
-  udr: 'udr.yaml',
-  pcf: 'pcf.yaml',
-  nssf: 'nssf.yaml',
-  bsf: 'bsf.yaml',
-  amf: 'amf.yaml',
-  smf: 'smf.yaml',
-  upf: 'upf.yaml',
-  scp: 'scp.yaml',
+  nrf: 'nrf.yaml.in',
+  ausf: 'ausf.yaml.in',
+  udm: 'udm.yaml.in',
+  udr: 'udr.yaml.in',
+  pcf: 'pcf.yaml.in',
+  nssf: 'nssf.yaml.in',
+  bsf: 'bsf.yaml.in',
+  amf: 'amf.yaml.in',
+  smf: 'smf.yaml.in',
+  upf: 'upf.yaml.in',
+  scp: 'scp.yaml.in',
 };

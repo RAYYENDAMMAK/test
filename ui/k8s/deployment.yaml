@@ -79,5 +79,5 @@ spec:
             type: DirectoryOrCreate
         - name: open5gs-config
           hostPath:
-            path: /etc/open5gs
+            path: /home/rayen/ieee_5g_core
             type: Directory

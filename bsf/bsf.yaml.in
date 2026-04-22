@@ -1,0 +1,13 @@
+logger:
+  file:
+    path: /var/log/open5gs/bsf.log
+  level: info
+bsf:
+  sbi:
+    server:
+      - address: ${POD_IP}
+        port: 7777
+    client:
+      scp:
+        - uri: http://scp-svc:7777
+db_uri: mongodb://mongodb-svc.open5gs.svc.cluster.local/open5gs

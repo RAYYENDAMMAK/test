@@ -44,9 +44,9 @@ spec:
               cpu: "500m"
       volumes:
         - name: ue-config
-          configMap:
-            name: ueransim-ue-config
-            defaultMode: 0755
+          hostPath:
+            path: /home/rayen/ieee_5g_core/ueransim-ue
+            type: Directory
         - name: dev-net-tun
           hostPath:
             path: /dev/net/tun

@@ -1,0 +1,23 @@
+logger:
+  file:
+    path: /var/log/open5gs/upf.log
+  level: info
+global:
+  max:
+    ue: 1024
+upf:
+  pfcp:
+    server:
+      - address: ${POD_IP}
+  gtpu:
+    server:
+      - address: ${POD_IP}
+  session:
+    - subnet: 10.45.0.1/16
+      gateway: 10.45.0.1
+    - subnet: 2001:db8:cafe::/48
+      gateway: 2001:db8:cafe::1
+  metrics:
+    server:
+      - address: ${POD_IP}
+        port: 9090

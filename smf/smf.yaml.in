@@ -1,0 +1,42 @@
+logger:
+  file:
+    path: /var/log/open5gs/smf.log
+  level: info
+smf:
+  info:
+    - s_nssai:
+        - sst: 1
+          sd: 1
+          dnn:
+            - internet
+  sbi:
+    server:
+      - address: ${POD_IP}
+        port: 7777
+    client:
+      scp:
+        - uri: http://scp-svc:7777
+  pfcp:
+    server:
+      - address: ${POD_IP}
+    client:
+      upf:
+        - address: ${UPF_IP}
+  gtpc:
+    server:
+      - address: ${POD_IP}
+  gtpu:
+    server:
+      - address: ${POD_IP}
+  metrics:
+    server:
+      - address: ${POD_IP}
+        port: 9090
+  session:
+    - subnet: 10.45.0.0/16
+      gateway: 10.45.0.1
+      dnn: internet
+  dns:
+    - 8.8.8.8
+    - 8.8.4.4
+  mtu: 1400

@@ -41,5 +41,6 @@ spec:
               cpu: "200m"
       volumes:
         - name: pcf-config
-          configMap:
-            name: pcf-config
+          hostPath:
+            path: /home/rayen/ieee_5g_core/pcf
+            type: Directory

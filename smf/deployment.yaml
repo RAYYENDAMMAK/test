@@ -59,5 +59,6 @@ spec:
               cpu: "500m"
       volumes:
         - name: smf-config
-          configMap:
-            name: smf-config
+          hostPath:
+            path: /home/rayen/ieee_5g_core/smf
+            type: Directory

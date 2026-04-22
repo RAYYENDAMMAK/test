@@ -1,0 +1,20 @@
+In 5G, SBI stands for Service-Based Interface. It is the "language" and connection method that all 5G Network Functions (NFs) use to talk to each other.
+
+  Here is the breakdown of why it appears everywhere:
+
+  1. Service-Based Architecture (SBA)
+  In older networks (like 4G), components were connected with specific "point-to-point" wires (e.g., AMF only talked to SMF over a specific protocol). In 5G, the architecture is like a web
+  service. Every NF (AMF, SMF, UDM, etc.) acts like a mini-web server.
+
+  2. How it works (HTTP/2 + JSON)
+  The SBI interface uses HTTP/2 and JSON, exactly like modern web APIs (REST APIs). When the AMF needs to talk to the UDM, it doesn't send a specialized telecom signal; it sends an HTTP
+  "POST" or "GET" request, just like a browser.
+
+  3. The Configuration Fields
+  In your Open5GS configuration and the UI, the SBI Interface section usually has two parts:
+   * Server: This is the "Bind Address" and "Port." It tells the NF which IP (usually its own Pod IP) and port (usually 7777) to use to "listen" for incoming requests from other NFs.
+   * Client: This tells the NF where to send its own requests. In your setup (Model C), the client points to the SCP (Service Communication Proxy), which acts as a router for all these
+     HTTP/2 messages.
+
+  Summary
+  Think of the SBI Interface as the "Network Card for 5G Apps." It's the standard way they register themselves, discover others, and exchange data using web-standard protocols.

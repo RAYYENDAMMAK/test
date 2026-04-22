@@ -270,23 +270,48 @@ const GLOBAL_PROPAGATION: Record<string, Record<string, keyof typeof DEFAULT_GLO
 
 // ─── Helpers: read/write ConfigMap YAML ──────────────────────────────────────
 async function readNfYaml(name: string): Promise<{ obj: any; raw: string }> {
-  const filePath = path.join(NF_CONFIG_DIR, `${name}.yaml`);
+  // 1. Try local cache
+  const cachePath = path.join(NF_CONFIG_DIR, `${name}.yaml`);
   try {
-    const raw = await fs.readFile(filePath, 'utf8');
+    const raw = await fs.readFile(cachePath, 'utf8');
     const obj = yaml.load(raw) as any || {};
     return { obj, raw };
   } catch (err: any) {
     if (err?.code !== 'ENOENT') throw err;
   }
 
+  // 2. Try source directory in project folder (e.g. /etc/open5gs/amf/amf.yaml.in)
+  const key = NF_CONFIG_KEY[name] || `${name}.yaml.in`;
+  const sourcePath = path.join(SOURCE_CONFIGMAP_DIR, name, key);
+  try {
+    const raw = await fs.readFile(sourcePath, 'utf8');
+    const obj = yaml.load(raw) as any || {};
+    // Seed cache
+    await fs.mkdir(NF_CONFIG_DIR, { recursive: true });
+    await fs.writeFile(cachePath, raw, 'utf8');
+    return { obj, raw };
+  } catch (err: any) {
+    if (err?.code !== 'ENOENT') {
+       console.warn(`Error reading source at ${sourcePath}:`, err.message);
+    }
+  }
+
+  // 3. Fallback to Kubernetes ConfigMap API
   const cmName = NF_CONFIG_MAP[name];
-  const key    = NF_CONFIG_KEY[name];
-  const cm = await coreV1Api.readNamespacedConfigMap(cmName, NAMESPACE);
-  const raw = cm.body.data?.[key] || '';
-  const obj = yaml.load(raw) as any || {};
-  await fs.mkdir(NF_CONFIG_DIR, { recursive: true });
-  await fs.writeFile(filePath, raw, 'utf8');
-  return { obj, raw };
+  if (cmName) {
+    try {
+      const cm = await coreV1Api.readNamespacedConfigMap(cmName, NAMESPACE);
+      const raw = cm.body.data?.[key] || cm.body.data?.[`${name}.yaml`] || '';
+      const obj = yaml.load(raw) as any || {};
+      await fs.mkdir(NF_CONFIG_DIR, { recursive: true });
+      await fs.writeFile(cachePath, raw, 'utf8');
+      return { obj, raw };
+    } catch (err: any) {
+      console.warn(`Error reading ConfigMap ${cmName}:`, err.message);
+    }
+  }
+
+  return { obj: {}, raw: '' };
 }
 
 async function writeFileAtomically(filePath: string, raw: string): Promise<void> {
@@ -308,30 +333,38 @@ async function restartNfPods(name: string): Promise<void> {
 
 async function writeNfYamlRaw(name: string, raw: string, restartPods: boolean = true): Promise<string> {
   const cmName = NF_CONFIG_MAP[name];
-  const key    = NF_CONFIG_KEY[name];
-  const filePath = path.join(NF_CONFIG_DIR, `${name}.yaml`);
-  const sourceFilePath = path.join(SOURCE_CONFIGMAP_DIR, `${name}.yaml`);
+  const key    = NF_CONFIG_KEY[name] || `${name}.yaml.in`;
+  const cachePath = path.join(NF_CONFIG_DIR, `${name}.yaml`);
+  const sourcePath = path.join(SOURCE_CONFIGMAP_DIR, name, key);
+
   const parsed = yaml.load(raw) as any || {};
   const normalized = normalizeNfConfig(name, parsed).obj;
   const normalizedRaw = yaml.dump(normalized, { lineWidth: 120 });
 
-  // Write to local cache
-  await writeFileAtomically(filePath, normalizedRaw);
+  // 1. Write to local cache (/var/lib/5gcore-ui/nf-configs)
+  await writeFileAtomically(cachePath, normalizedRaw);
 
-  // Write to source configmap directory (/etc/open5gs)
+  // 2. Write to source project directory (e.g. /etc/open5gs/amf/amf.yaml.in)
+  // This is mapped to the host's project folder.
   try {
-    await writeFileAtomically(sourceFilePath, normalizedRaw);
+    await writeFileAtomically(sourcePath, normalizedRaw);
   } catch (err: any) {
-    console.error(`Failed to write source config at ${sourceFilePath}:`, err.message);
+    console.error(`Failed to write source config at ${sourcePath}:`, err.message);
   }
 
-  // Update ConfigMap in Kubernetes
-  const cm = await coreV1Api.readNamespacedConfigMap(cmName, NAMESPACE);
-  if (!cm.body.data) cm.body.data = {};
-  cm.body.data[key] = normalizedRaw;
-  await coreV1Api.replaceNamespacedConfigMap(cmName, NAMESPACE, cm.body);
+  // 3. Update ConfigMap in Kubernetes (if it exists)
+  if (cmName) {
+    try {
+      const cm = await coreV1Api.readNamespacedConfigMap(cmName, NAMESPACE);
+      if (!cm.body.data) cm.body.data = {};
+      cm.body.data[key] = normalizedRaw;
+      await coreV1Api.replaceNamespacedConfigMap(cmName, NAMESPACE, cm.body);
+    } catch (err: any) {
+       console.error(`Failed to update ConfigMap ${cmName}:`, err.message);
+    }
+  }
 
-  // Restart pods to pick up the new ConfigMap content in /etc/open5gs
+  // Restart pods to pick up the new ConfigMap content or HostPath change
   if (restartPods) {
     await restartNfPods(name).catch(err => {
       console.error(`Failed to restart ${name} pods:`, err.message);
@@ -487,6 +520,16 @@ router.get('/:name/config/fields', async (req: Request, res: Response) => {
   if (!NF_CONFIG_MAP[name]) return res.status(404).json({ error: 'No config for this NF' });
   try {
     const { obj, raw } = await readNfYaml(name);
+    
+    // Fetch Pod IP to substitute ${POD_IP} if present
+    let podIp = '';
+    try {
+      const pods = await coreV1Api.listNamespacedPod(NAMESPACE, undefined, undefined, undefined, undefined, `app=${name}`);
+      podIp = pods.body.items[0]?.status?.podIP || '';
+    } catch (e) {
+      console.warn(`Could not fetch pod IP for ${name}:`, (e as any).message);
+    }
+
     const original = JSON.parse(JSON.stringify(obj || {}));
     const normalized = normalizeNfConfig(name, obj);
     if (normalized.changed && !deepEqual(original, normalized.obj)) {

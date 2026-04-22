@@ -1,0 +1,17 @@
+logger:
+  file:
+    path: /var/log/open5gs/udr.log
+  level: info
+udr:
+  sbi:
+    server:
+      - address: ${POD_IP}
+        port: 7777
+    client:
+      scp:
+        - uri: http://scp-svc:7777
+  serving:
+    - plmn_id:
+        mcc: '999'
+        mnc: '70'
+db_uri: mongodb://mongodb-svc.open5gs.svc.cluster.local/open5gs

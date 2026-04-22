@@ -1,0 +1,16 @@
+logger:
+  file:
+    path: /var/log/open5gs/ausf.log
+  level: info
+ausf:
+  sbi:
+    server:
+      - address: ${POD_IP}
+        port: 7777
+    client:
+      scp:
+        - uri: http://scp-svc:7777
+  serving:
+    - plmn_id:
+        mcc: '999'
+        mnc: '70'

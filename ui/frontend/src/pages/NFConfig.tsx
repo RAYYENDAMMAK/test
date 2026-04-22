@@ -44,7 +44,7 @@ interface FieldGroup {
 const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   nrf: [
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
-      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '${POD_IP}' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
     { section: 'Network Identity', icon: <Globe size={13} />, fields: [
@@ -54,7 +54,7 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   ],
   scp: [
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
-      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '${POD_IP}' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
     { section: 'NRF Discovery', icon: <Link size={13} />, fields: [
@@ -63,7 +63,7 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   ],
   ausf: [
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
-      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '${POD_IP}' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
     { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
@@ -72,7 +72,7 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   ],
   udm: [
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
-      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '${POD_IP}' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
     { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
@@ -81,7 +81,7 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   ],
   udr: [
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
-      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '${POD_IP}' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
     { section: 'Database', icon: <Database size={13} />, fields: [
@@ -93,7 +93,7 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   ],
   pcf: [
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
-      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '${POD_IP}' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
     { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
@@ -102,7 +102,7 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   ],
   nssf: [
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
-      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '${POD_IP}' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
     { section: 'Slice Selection', icon: <LayoutGrid size={13} />, fields: [
@@ -116,7 +116,7 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   ],
   bsf: [
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
-      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '${POD_IP}' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
     { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
@@ -134,10 +134,10 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
       { key: 'amf_name',     label: 'AMF Name',     type: 'text',   placeholder: 'open5gs-amf0', width: 'half' },
     ]},
     { section: 'NGAP — N2 Interface (toward gNB)', icon: <Server size={13} />, fields: [
-      { key: 'ngap_addr', label: 'NGAP Bind Address', type: 'ip', placeholder: '0.0.0.0', hint: 'gNB connects here via SCTP port 38412' },
+      { key: 'ngap_addr', label: 'NGAP Bind Address', type: 'ip', placeholder: '${POD_IP}', hint: 'gNB connects here via SCTP port 38412' },
     ]},
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
-      { key: 'sbi_addr', label: 'SBI Bind Address', type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_addr', label: 'SBI Bind Address', type: 'ip', placeholder: '${POD_IP}' },
       { key: 'sbi_port', label: 'SBI Port', type: 'number', placeholder: '7777', width: 'third' },
       { key: 'scp_uri',  label: 'SCP URI',  type: 'text', fromGlobal: 'scpUri' as any },
     ]},
@@ -151,9 +151,9 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   ],
   smf: [
     { section: 'Interfaces', icon: <Network size={13} />, fields: [
-      { key: 'sbi_addr',  label: 'SBI Bind Address',       type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_addr',  label: 'SBI Bind Address',       type: 'ip', placeholder: '${POD_IP}' },
       { key: 'sbi_port',  label: 'SBI Port',               type: 'number', placeholder: '7777', width: 'third' },
-      { key: 'pfcp_addr', label: 'PFCP Address (N4 local)', type: 'ip', placeholder: '0.0.0.0', hint: 'SMF side of N4 interface toward UPF' },
+      { key: 'pfcp_addr', label: 'PFCP Address (N4 local)', type: 'ip', placeholder: '${POD_IP}', hint: 'SMF side of N4 interface toward UPF' },
       { key: 'upf_addr',  label: 'UPF PFCP Address',        type: 'ip', placeholder: 'upf-svc', hint: 'UPF remote PFCP endpoint' },
     ]},
     { section: 'UE IP Pool & Data Network', icon: <Cpu size={13} />, fields: [
@@ -171,8 +171,8 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   ],
   upf: [
     { section: 'Interfaces', icon: <Network size={13} />, fields: [
-      { key: 'pfcp_addr', label: 'PFCP Address (N4)', type: 'ip', placeholder: '0.0.0.0', hint: 'Must match SMF UPF PFCP config' },
-      { key: 'gtpu_addr', label: 'GTP-U Address (N3)', type: 'ip', placeholder: '0.0.0.0', hint: 'gNB sends user-plane traffic here' },
+      { key: 'pfcp_addr', label: 'PFCP Address (N4)', type: 'ip', placeholder: '${POD_IP}', hint: 'Must match SMF UPF PFCP config' },
+      { key: 'gtpu_addr', label: 'GTP-U Address (N3)', type: 'ip', placeholder: '${POD_IP}', hint: 'gNB sends user-plane traffic here' },
     ]},
     { section: 'UE IP Pool & Data Network', icon: <Cpu size={13} />, fields: [
       { key: 'ue_subnet', label: 'UE IP Subnet', type: 'cidr', placeholder: '10.45.0.1/16', hint: 'Must match SMF subnet exactly' },
@@ -187,28 +187,28 @@ const NF_LIST = ['nrf','ausf','udm','udr','pcf','nssf','bsf','amf','smf','upf','
 const DEFAULT_GLOBAL: GlobalConfig = {
   mcc: '605', mnc: '01', tac: 1, sst: 1, sd: '000001',
   nrfUri: 'http://nrf-svc:7777',
-  scpUri: 'http://scp-svc:7777' as any,
+  scpUri: 'http://scp-svc:7777',
   mongoUri: 'mongodb://192.168.1.102:27017/open5gs',
   logLevel: 'info',
   networkName: '5G SA PRIVATE NETWORK',
 };
 
 const MOCK_FIELDS: Record<string, Record<string, any>> = {
-  nrf:  { sbi_addr:'0.0.0.0', sbi_port:7777, mcc:'001', mnc:'01' },
-  scp:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
-  ausf: { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
-  udm:  { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
-  udr:  { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777', db_uri:'mongodb://192.168.1.102:27017/open5gs' },
-  pcf:  { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
-  nssf: { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777', nsi_uri:'http://nrf-svc:7777', sst:1, sd:'000001' },
-  bsf:  { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
+  nrf:  { sbi_addr:'${POD_IP}', sbi_port:7777, mcc:'001', mnc:'01' },
+  scp:  { sbi_addr:'${POD_IP}', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
+  ausf: { sbi_addr:'${POD_IP}', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
+  udm:  { sbi_addr:'${POD_IP}', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
+  udr:  { sbi_addr:'${POD_IP}', sbi_port:7777, scp_uri:'http://scp-svc:7777', db_uri:'mongodb://192.168.1.102:27017/open5gs' },
+  pcf:  { sbi_addr:'${POD_IP}', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
+  nssf: { sbi_addr:'${POD_IP}', sbi_port:7777, scp_uri:'http://scp-svc:7777', nsi_uri:'http://nrf-svc:7777', sst:1, sd:'000001' },
+  bsf:  { sbi_addr:'${POD_IP}', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
   amf:  { mcc:'605', mnc:'01', tac:1, sst:1, sd:'000001', network_name:'5G SA PRIVATE NETWORK', amf_name:'open5gs-amf0',
-          ngap_addr:'0.0.0.0', sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777',
+          ngap_addr:'${POD_IP}', sbi_addr:'${POD_IP}', sbi_port:7777, scp_uri:'http://scp-svc:7777',
           integrity_order:['NIA2','NIA1','NIA0'], ciphering_order:['NEA0','NEA2','NEA1'], t3512:540 },
-  smf:  { sbi_addr:'0.0.0.0', sbi_port:7777, pfcp_addr:'0.0.0.0', upf_addr:'upf-svc',
+  smf:  { sbi_addr:'${POD_IP}', sbi_port:7777, pfcp_addr:'${POD_IP}', upf_addr:'upf-svc',
           ue_subnet:'10.45.0.1/16', dnn:'internet', mtu:1400,
           dns_primary:'8.8.8.8', dns_secondary:'8.8.4.4', scp_uri:'http://scp-svc:7777' },
-  upf:  { pfcp_addr:'0.0.0.0', gtpu_addr:'0.0.0.0', ue_subnet:'10.45.0.1/16', dnn:'internet', tun_dev:'ogstun' },
+  upf:  { pfcp_addr:'${POD_IP}', gtpu_addr:'${POD_IP}', ue_subnet:'10.45.0.1/16', dnn:'internet', tun_dev:'ogstun' },
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -294,11 +294,12 @@ function TagsField({
 }
 
 function FieldInput({
-  field, value, globalValue, onChange,
+  field, value, globalValue, ipMap, onChange,
 }: {
   field: FieldDef;
   value: any;
   globalValue?: any;
+  ipMap: Record<string, string>;
   onChange: (v: any) => void;
 }) {
   const isInherited = field.fromGlobal !== undefined;
@@ -333,16 +334,39 @@ function FieldInput({
     );
   }
 
+  // Substitution for display: show real IP if template variables used
+  let displayValue = value ?? '';
+  let isSubstituted = false;
+  let activePlaceholder = '';
+
+  for (const [placeholder, ip] of Object.entries(ipMap)) {
+    if (displayValue === placeholder && ip) {
+      displayValue = ip;
+      isSubstituted = true;
+      activePlaceholder = placeholder;
+      break;
+    }
+  }
+
   return (
     <div className="relative">
       <input
         type={field.type === 'number' ? 'number' : 'text'}
-        value={value ?? ''}
+        value={displayValue}
         placeholder={field.placeholder}
-        onChange={e => onChange(field.type === 'number' ? Number(e.target.value) : e.target.value)}
-        className={base}
+        onChange={e => {
+          let val = e.target.value;
+          if (isSubstituted && val === ipMap[activePlaceholder]) val = activePlaceholder;
+          onChange(field.type === 'number' ? Number(val) : val);
+        }}
+        className={`${base} ${isSubstituted ? 'text-emerald-400 font-bold' : ''}`}
         style={field.unit ? { paddingRight: '2.5rem' } : undefined}
       />
+      {isSubstituted && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-emerald-500/50 uppercase font-bold pointer-events-none">
+          Live IP
+        </span>
+      )}
       {field.unit && (
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">{field.unit}</span>
       )}
@@ -437,7 +461,7 @@ function GlobalPanel({
           </div>
           <div>
             <label className="block text-xs text-gray-400 mb-1.5">SCP URI</label>
-            <input value={(config as any).scpUri} onChange={e => onChange('scpUri' as any, e.target.value)}
+            <input value={config.scpUri} onChange={e => onChange('scpUri', e.target.value)}
               className={inp} placeholder="http://scp-svc:7777" />
             <p className="text-[10px] text-gray-600 mt-1">NFs use this as their SBI proxy (Model C)</p>
           </div>
@@ -485,11 +509,12 @@ function GlobalPanel({
 
 // ─── NF Structured Form Panel ─────────────────────────────────────────────────
 function NFFormPanel({
-  nfName, fields, globalCfg, onChange,
+  nfName, fields, globalCfg, ipMap, onChange,
 }: {
   nfName: string;
   fields: Record<string, any>;
   globalCfg: GlobalConfig;
+  ipMap: Record<string, string>;
   onChange: (key: string, value: any) => void;
 }) {
   const schema = NF_SCHEMAS[nfName] || [];
@@ -524,6 +549,7 @@ function NFFormPanel({
                     field={field}
                     value={val}
                     globalValue={globalVal}
+                    ipMap={ipMap}
                     onChange={v => onChange(field.key, v)}
                   />
                   {field.hint && !isInherited && (
@@ -547,7 +573,7 @@ export default function NFConfig() {
   const [nfs, setNfs]                 = useState<any[]>([]);
   const [selected, setSelected]       = useState<string>('global');
   const [globalCfg, setGlobalCfg]     = useState<GlobalConfig>(DEFAULT_GLOBAL);
-  const [nfFields, setNfFields]       = useState<Record<string, Record<string, any>>>(MOCK_FIELDS);
+  const [nfFields, setNfFields]       = useState<Record<string, Record<string, any>>>({});
   const [yamlMap, setYamlMap]         = useState<Record<string, string>>({});
   const [viewMode, setViewMode]       = useState<'form' | 'yaml'>('form');
   const [saving, setSaving]           = useState(false);
@@ -825,13 +851,25 @@ export default function NFConfig() {
                 nfName={selected}
                 fields={fields}
                 globalCfg={globalCfg}
+                ipMap={(() => {
+                  const map: Record<string, string> = {
+                    '${POD_IP}': currentNF?.podIP || '',
+                  };
+                  nfs.forEach(n => {
+                    // map['${' + n.name.toUpperCase() + '_IP}'] = n.podIP || '';
+                    // To avoid template literal issues in python script, I'll use concatenation
+                    const key = '${' + n.name.toUpperCase() + '_IP}';
+                    map[key] = n.podIP || '';
+                  });
+                  return map;
+                })()}
                 onChange={handleFieldChange}
               />
             ) : (
               /* Raw YAML editor */
               <div className="flex-1 min-h-0 rounded-xl overflow-hidden border border-gray-800">
                 <div className="bg-gray-900 border-b border-gray-800 px-4 py-2 flex items-center justify-between">
-                  <span className="text-xs font-mono text-gray-400">/etc/open5gs/{selected}.yaml</span>
+                  <span className="text-xs font-mono text-gray-400">/home/rayen/ieee_5g_core/{selected}/{selected}.yaml.in</span>
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] text-gray-600">Full YAML — all fields exposed</span>
                     {isDirtyYaml && <span className="text-xs text-yellow-400">● Unsaved</span>}

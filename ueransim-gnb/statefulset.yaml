@@ -43,6 +43,6 @@ spec:
               cpu: "500m"
       volumes:
         - name: gnb-config
-          configMap:
-            name: ueransim-gnb-config
-            defaultMode: 0755
+          hostPath:
+            path: /home/rayen/ieee_5g_core/ueransim-gnb
+            type: Directory

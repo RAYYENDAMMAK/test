@@ -1,0 +1,17 @@
+logger:
+  file:
+    path: /var/log/open5gs/nssf.log
+  level: info
+nssf:
+  sbi:
+    server:
+      - address: ${POD_IP}
+        port: 7777
+    client:
+      scp:
+        - uri: http://scp-svc:7777
+      nsi:
+        - uri: http://nrf-svc:7777
+          s_nssai:
+            sst: 1
+            sd: '000001'

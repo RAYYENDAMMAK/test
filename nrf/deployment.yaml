@@ -37,5 +37,6 @@ spec:
               cpu: "200m"
       volumes:
         - name: nrf-config
-          configMap:
-            name: nrf-config
+          hostPath:
+            path: /home/rayen/ieee_5g_core/nrf
+            type: Directory

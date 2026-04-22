@@ -1,0 +1,19 @@
+mcc: '999'
+mnc: '70'
+
+nci: '0x000000010'
+idLength: 32
+tac: 1
+
+linkIp: ${GNB_POD_IP}
+ngapIp: ${GNB_POD_IP}
+gtpIp: ${GNB_POD_IP}
+
+amfConfigs:
+  - address: ${AMF_SERVICE_IP}
+    port: 38412
+
+slices:
+  - sst: 1
+    sd: '000001'
+ignoreStreamIds: true

@@ -5,51 +5,40 @@ namespace: open5gs
 
 resources:
   - namespace.yaml
-  # Multus CNI + NADs — uncomment only if dedicated NICs are available (e.g. AWS EC2 with extra ENIs)
+  # Multus CNI + NADs
   - multus/00-multus-daemonset.yaml
   - multus/01-nad-n2.yaml
   - multus/02-nad-n3.yaml
   - multus/03-nad-n4.yaml
   - multus/04-nad-n6.yaml
   - multus/05-whereabouts.yaml
+  # Services & Deployments
   - mongodb/statefulset.yaml
   - mongodb/service.yaml
-  - nrf/configmap.yaml
   - nrf/deployment.yaml
   - nrf/service.yaml
-  - ausf/configmap.yaml
   - ausf/deployment.yaml
   - ausf/service.yaml
-  - udm/configmap.yaml
   - udm/deployment.yaml
   - udm/service.yaml
-  - udr/configmap.yaml
   - udr/deployment.yaml
   - udr/service.yaml
-  - pcf/configmap.yaml
   - pcf/deployment.yaml
   - pcf/service.yaml
-  - nssf/configmap.yaml
   - nssf/deployment.yaml
   - nssf/service.yaml
-  - bsf/configmap.yaml
   - bsf/deployment.yaml
   - bsf/service.yaml
-  - amf/configmap.yaml
   - amf/deployment.yaml
   - amf/service.yaml
-  - smf/configmap.yaml
   - smf/deployment.yaml
   - smf/service.yaml
-  - upf/configmap.yaml
   - upf/deployment.yaml
   - upf/service.yaml
-  - ueransim-gnb/configmap.yaml
+  - scp/deployment.yaml
   - ueransim-gnb/service.yaml
   - ueransim-gnb/statefulset.yaml
-  - ueransim-ue/configmap.yaml
   - ueransim-ue/deployment.yaml
-  # Open5GS WebUI — commented out; use the custom dashboard instead
   - webui/deployment.yaml
   - webui/service.yaml
   - ui/k8s/rbac.yaml

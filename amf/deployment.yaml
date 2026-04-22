@@ -53,5 +53,6 @@ spec:
               cpu: "500m"
       volumes:
         - name: amf-config
-          configMap:
-            name: amf-config
+          hostPath:
+            path: /home/rayen/ieee_5g_core/amf
+            type: Directory

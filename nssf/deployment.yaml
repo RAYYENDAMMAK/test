@@ -37,5 +37,6 @@ spec:
               cpu: "200m"
       volumes:
         - name: nssf-config
-          configMap:
-            name: nssf-config
+          hostPath:
+            path: /home/rayen/ieee_5g_core/nssf
+            type: Directory

@@ -97,8 +97,9 @@ spec:
               cpu: "500m"
       volumes:
         - name: upf-config
-          configMap:
-            name: upf-config
+          hostPath:
+            path: /home/rayen/ieee_5g_core/upf
+            type: Directory
         - name: dev-net-tun
           hostPath:
             path: /dev/net/tun
