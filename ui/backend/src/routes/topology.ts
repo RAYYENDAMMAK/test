@@ -1,52 +1,47 @@
 import { Router, Request, Response } from 'express';
-import { coreV1Api, appsV1Api, NAMESPACE, NF_NAMES } from '../k8s-client';
+import * as yaml from 'js-yaml';
+import { coreV1Api, appsV1Api, NAMESPACE, NF_NAMES, NF_CONFIG_MAP, NF_CONFIG_KEY } from '../k8s-client';
 
 const router = Router();
 
-// Defines 5G core logical connections (Model C: Indirect Communication via SCP)
-const NF_CONNECTIONS = [
-  // Consumers to SCP
-  { from: 'amf', to: 'scp', interface: 'SBI' },
-  { from: 'smf', to: 'scp', interface: 'SBI' },
-  
-  // SCP to Producers
-  { from: 'scp', to: 'nrf', interface: 'Nnrf' },
-  { from: 'scp', to: 'ausf', interface: 'Nausf' },
-  { from: 'scp', to: 'udm', interface: 'Nudm' },
-  { from: 'scp', to: 'udr', interface: 'Nudr' },
-  { from: 'scp', to: 'pcf', interface: 'Npcf' },
-  { from: 'scp', to: 'nssf', interface: 'Nnssf' },
-  { from: 'scp', to: 'bsf', interface: 'Nbsf' },
-
-  // NSSF direct NSI link to NRF (Slice Selection)
-  { from: 'nssf', to: 'nrf', interface: 'NSI' },
-
-  // Non-SBI / Interface connections
-  { from: 'smf', to: 'upf', interface: 'N4/PFCP' },
-  { from: 'upf', to: 'internet', interface: 'N6' },
-  { from: 'gnb', to: 'amf', interface: 'N2/NGAP' },
-  { from: 'gnb', to: 'upf', interface: 'N3/GTP-U' },
-];
-
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const [deployRes, podRes] = await Promise.all([
+    const [deployRes, podRes, cmRes] = await Promise.all([
       appsV1Api.listNamespacedDeployment(NAMESPACE),
       coreV1Api.listNamespacedPod(NAMESPACE),
+      coreV1Api.listNamespacedConfigMap(NAMESPACE),
     ]);
 
     const deployments = deployRes.body.items;
-    const pods = podRes.body.items;
+    const cms = cmRes.body.items;
 
     const nfStatus: Record<string, string> = {};
+    const nfConfigs: Record<string, any> = {};
+
     NF_NAMES.forEach(name => {
       const deploy = deployments.find(d => d.metadata?.name === name);
+      if (!deploy) {
+        nfStatus[name] = 'NotDeployed';
+        return;
+      }
       const ready = deploy?.status?.readyReplicas || 0;
       const desired = deploy?.spec?.replicas || 1;
       nfStatus[name] = ready === desired && desired > 0 ? 'Running' : ready === 0 ? 'Down' : 'Degraded';
+
+      // Parse Config
+      const cmName = NF_CONFIG_MAP[name];
+      const key = NF_CONFIG_KEY[name];
+      const cm = cms.find(c => c.metadata?.name === cmName);
+      if (cm?.data) {
+        // Try exact key, then .in, then fallback to first key
+        const raw = cm.data[key] || cm.data[`${key}.in`] || Object.values(cm.data)[0];
+        if (raw && typeof raw === 'string') {
+          try { nfConfigs[name] = yaml.load(raw); } catch {}
+        }
+      }
     });
 
-    // Build nodes
+    // Build nodes (exclude NotDeployed if desired, but here we keep them but show as NotDeployed)
     const nodes = [
       ...NF_NAMES.map(name => ({
         id: name,
@@ -60,12 +55,82 @@ router.get('/', async (req: Request, res: Response) => {
       { id: 'mongodb', label: 'MongoDB', type: 'db', status: 'Running', group: 'db' },
     ];
 
-    // Add mongo connections
-    const mongoConnections = ['udr', 'pcf', 'bsf'].map(nf => ({
-      from: nf, to: 'mongodb', interface: 'MongoDB'
-    }));
+    const connections: { from: string, to: string, interface: string }[] = [];
 
-    const edges = [...NF_CONNECTIONS, ...mongoConnections].map((c, i) => ({
+    // Build connections from configs
+    Object.entries(nfConfigs).forEach(([name, config]) => {
+      const core = (config as any)?.[name];
+      if (!core) return;
+
+      // 1. SBI Clients (Consumers)
+      if (core.sbi?.client) {
+        const c = core.sbi.client;
+        if (c.scp?.length > 0 || c.scp?.uri) {
+          connections.push({ from: name, to: 'scp', interface: 'SBI' });
+        } else if (c.nrf?.length > 0 || c.nrf?.uri) {
+          connections.push({ from: name, to: 'nrf', interface: 'SBI' });
+        }
+        
+        // Specialized NSI link for NSSF
+        if (c.nsi?.length > 0 || c.nsi?.uri) {
+          connections.push({ from: name, to: 'nrf', interface: 'NSI' });
+        }
+      }
+
+      // 2. SMF PFCP
+      if (name === 'smf' && core.pfcp?.client?.upf) {
+        connections.push({ from: 'smf', to: 'upf', interface: 'N4/PFCP' });
+      }
+
+      // 3. Inferred RAN links (Inferred from server presence)
+      if (name === 'amf' && core.ngap) {
+        connections.push({ from: 'gnb', to: 'amf', interface: 'N2/NGAP' });
+      }
+      if (name === 'upf' && core.gtpu) {
+        connections.push({ from: 'gnb', to: 'upf', interface: 'N3/GTP-U' });
+      }
+      if (name === 'upf' && core.session) {
+        connections.push({ from: 'upf', to: 'internet', interface: 'N6' });
+      }
+    });
+
+    // 4. SCP to NRF (Always if SCP is proxying or configured)
+    if (nfConfigs['scp']?.scp?.sbi?.client?.nrf) {
+      connections.push({ from: 'scp', to: 'nrf', interface: 'Nnrf' });
+    }
+
+    // 5. SCP to Producers (Logical if SCP is used as proxy)
+    // If major consumers use SCP, we show SCP routing to producers
+    const usesScp = ['amf', 'smf'].some(n => {
+      const c = nfConfigs[n]?.[n]?.sbi?.client;
+      return c?.scp?.length > 0 || c?.scp?.uri;
+    });
+
+    if (usesScp) {
+       ['ausf', 'udm', 'udr', 'pcf', 'nssf', 'bsf'].forEach(prod => {
+         if (nfStatus[prod] !== 'NotDeployed') {
+           connections.push({ from: 'scp', to: prod, interface: `N${prod}` });
+         }
+       });
+    }
+
+    // 6. DB connections
+    ['udr', 'pcf', 'bsf'].forEach(nf => {
+       if (nfStatus[nf] !== 'NotDeployed') {
+         connections.push({ from: nf, to: 'mongodb', interface: 'MongoDB' });
+       }
+    });
+
+    // Remove duplicates
+    const seen = new Set<string>();
+    const uniqueConnections = connections.filter(c => {
+      const key = `${c.from}-${c.to}-${c.interface}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    const edges = uniqueConnections.map((c, i) => ({
       id: `e${i}`,
       from: c.from,
       to: c.to,
@@ -89,3 +154,4 @@ function getGroup(name: string): string {
 }
 
 export default router;
+
