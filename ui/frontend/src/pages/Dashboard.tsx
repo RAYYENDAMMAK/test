@@ -6,7 +6,7 @@ import Card from '../components/Card';
 import { NF } from '../types';
 
 const NF_GROUP: Record<string, string> = {
-  nrf: 'Core', ausf: 'Auth', udm: 'Auth', udr: 'Auth',
+  nrf: 'Core', scp: 'Core', ausf: 'Auth', udm: 'Auth', udr: 'Auth',
   pcf: 'Policy', nssf: 'Policy', bsf: 'Policy',
   amf: 'Control Plane', smf: 'Control Plane', upf: 'User Plane',
   webui: 'Management',

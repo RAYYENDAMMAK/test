@@ -52,6 +52,7 @@ const SOURCE_CONFIGMAP_DIR = process.env.SOURCE_CONFIGMAP_DIR || '/etc/open5gs';
 const DEFAULT_GLOBAL = {
   mcc: '605', mnc: '01', tac: 1, sst: 1, sd: '000001',
   nrfUri: 'http://nrf-svc:7777',
+  scpUri: 'http://scp-svc:7777',
   mongoUri: 'mongodb://192.168.1.102:27017/open5gs',
   logLevel: 'info',
 };
@@ -65,38 +66,44 @@ const NF_FIELD_PATHS: Record<string, Record<string, string>> = {
     mcc:      'nrf.serving.0.plmn_id.mcc',
     mnc:      'nrf.serving.0.plmn_id.mnc',
   },
+  scp:  {
+    sbi_addr: 'scp.sbi.server.0.address',
+    sbi_port: 'scp.sbi.server.0.port',
+    nrf_uri:  'scp.sbi.client.nrf.0.uri',
+  },
   ausf: {
     sbi_addr: 'ausf.sbi.server.0.address',
     sbi_port: 'ausf.sbi.server.0.port',
-    nrf_uri:  'ausf.sbi.client.nrf.0.uri',
+    scp_uri:  'ausf.sbi.client.scp.0.uri',
   },
   udm:  {
     sbi_addr: 'udm.sbi.server.0.address',
     sbi_port: 'udm.sbi.server.0.port',
-    nrf_uri:  'udm.sbi.client.nrf.0.uri',
+    scp_uri:  'udm.sbi.client.scp.0.uri',
   },
   udr:  {
     sbi_addr: 'udr.sbi.server.0.address',
     sbi_port: 'udr.sbi.server.0.port',
-    nrf_uri:  'udr.sbi.client.nrf.0.uri',
+    scp_uri:  'udr.sbi.client.scp.0.uri',
     db_uri:   'db_uri',
   },
   pcf:  {
     sbi_addr: 'pcf.sbi.server.0.address',
     sbi_port: 'pcf.sbi.server.0.port',
-    nrf_uri:  'pcf.sbi.client.nrf.0.uri',
+    scp_uri:  'pcf.sbi.client.scp.0.uri',
   },
   nssf: {
     sbi_addr: 'nssf.sbi.server.0.address',
     sbi_port: 'nssf.sbi.server.0.port',
-    nrf_uri:  'nssf.sbi.client.nrf.0.uri',
+    scp_uri:  'nssf.sbi.client.scp.0.uri',
+    nsi_uri:  'nssf.sbi.client.nsi.0.uri',
     sst:      'nssf.sbi.client.nsi.0.s_nssai.sst',
     sd:       'nssf.sbi.client.nsi.0.s_nssai.sd',
   },
   bsf:  {
     sbi_addr: 'bsf.sbi.server.0.address',
     sbi_port: 'bsf.sbi.server.0.port',
-    nrf_uri:  'bsf.sbi.client.nrf.0.uri',
+    scp_uri:  'bsf.sbi.client.scp.0.uri',
   },
   amf:  {
     mcc:              'amf.guami.0.plmn_id.mcc',
@@ -109,7 +116,7 @@ const NF_FIELD_PATHS: Record<string, Record<string, string>> = {
     ngap_addr:        'amf.ngap.server.0.address',
     sbi_addr:         'amf.sbi.server.0.address',
     sbi_port:         'amf.sbi.server.0.port',
-    nrf_uri:          'amf.sbi.client.nrf.0.uri',
+    scp_uri:          'amf.sbi.client.scp.0.uri',
     integrity_order:  'amf.security.integrity_order',
     ciphering_order:  'amf.security.ciphering_order',
     t3512:            'amf.time.t3512.value',
@@ -124,7 +131,7 @@ const NF_FIELD_PATHS: Record<string, Record<string, string>> = {
     mtu:          'smf.mtu',
     dns_primary:  'smf.dns.0',
     dns_secondary:'smf.dns.1',
-    nrf_uri:      'smf.sbi.client.nrf.0.uri',
+    scp_uri:      'smf.sbi.client.scp.0.uri',
   },
   upf:  {
     pfcp_addr: 'upf.pfcp.server.0.address',
@@ -249,14 +256,15 @@ function normalizeNfConfig(name: string, obj: any): { obj: any; changed: boolean
 /** Which structured fields correspond to global config keys, per NF */
 const GLOBAL_PROPAGATION: Record<string, Record<string, keyof typeof DEFAULT_GLOBAL>> = {
   nrf:  { mcc: 'mcc', mnc: 'mnc' },
-  ausf: { nrf_uri: 'nrfUri' },
-  udm:  { nrf_uri: 'nrfUri' },
-  udr:  { nrf_uri: 'nrfUri', db_uri: 'mongoUri' },
-  pcf:  { nrf_uri: 'nrfUri' },
-  nssf: { nrf_uri: 'nrfUri', sst: 'sst', sd: 'sd' },
-  bsf:  { nrf_uri: 'nrfUri' },
-  amf:  { mcc: 'mcc', mnc: 'mnc', tac: 'tac', sst: 'sst', sd: 'sd', nrf_uri: 'nrfUri' },
-  smf:  { nrf_uri: 'nrfUri' },
+  scp:  { nrf_uri: 'nrfUri' },
+  ausf: { scp_uri: 'scpUri' as any },
+  udm:  { scp_uri: 'scpUri' as any },
+  udr:  { scp_uri: 'scpUri' as any, db_uri: 'mongoUri' },
+  pcf:  { scp_uri: 'scpUri' as any },
+  nssf: { scp_uri: 'scpUri' as any, nsi_uri: 'nrfUri', sst: 'sst', sd: 'sd' },
+  bsf:  { scp_uri: 'scpUri' as any },
+  amf:  { mcc: 'mcc', mnc: 'mnc', tac: 'tac', sst: 'sst', sd: 'sd', scp_uri: 'scpUri' as any },
+  smf:  { scp_uri: 'scpUri' as any },
   upf:  {},
 };
 

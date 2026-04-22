@@ -18,6 +18,13 @@ spec:
           image: ueransim:local
           imagePullPolicy: Never
           command: ["/bin/sh", "/etc/ueransim/run-ue.sh"]
+          env:
+            - name: UE_COUNT
+              value: "4"
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           securityContext:
             privileged: true
             capabilities:

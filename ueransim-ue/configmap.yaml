@@ -76,7 +76,9 @@ data:
     fi
 
     export GNB_RLS_IP
+    : "${UE_COUNT:=1}"
 
     envsubst < /etc/ueransim/ue-template.yaml > /tmp/ue.yaml
 
-    exec nr-ue -c /tmp/ue.yaml -l
+    echo "Starting ${UE_COUNT} UE(s)..."
+    exec nr-ue -c /tmp/ue.yaml -n "${UE_COUNT}" -l

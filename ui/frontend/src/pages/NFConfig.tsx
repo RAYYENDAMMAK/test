@@ -16,6 +16,7 @@ interface GlobalConfig {
   sst: number;
   sd: string;
   nrfUri: string;
+  scpUri: string;
   mongoUri: string;
   logLevel: string;
   networkName: string;
@@ -51,7 +52,7 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
       { key: 'mnc', label: 'MNC', type: 'text', placeholder: '01',  fromGlobal: 'mnc', width: 'third', hint: 'Mobile Network Code' },
     ]},
   ],
-  ausf: [
+  scp: [
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
       { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
@@ -60,13 +61,22 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
       { key: 'nrf_uri', label: 'NRF URI', type: 'text', fromGlobal: 'nrfUri', placeholder: 'http://nrf-svc:7777' },
     ]},
   ],
+  ausf: [
+    { section: 'SBI Interface', icon: <Network size={13} />, fields: [
+      { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
+      { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
+    ]},
+    { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
+      { key: 'scp_uri', label: 'SCP URI', type: 'text', fromGlobal: 'scpUri' as any, placeholder: 'http://scp-svc:7777' },
+    ]},
+  ],
   udm: [
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
       { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
-    { section: 'NRF Discovery', icon: <Link size={13} />, fields: [
-      { key: 'nrf_uri', label: 'NRF URI', type: 'text', fromGlobal: 'nrfUri', placeholder: 'http://nrf-svc:7777' },
+    { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
+      { key: 'scp_uri', label: 'SCP URI', type: 'text', fromGlobal: 'scpUri' as any, placeholder: 'http://scp-svc:7777' },
     ]},
   ],
   udr: [
@@ -77,8 +87,8 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
     { section: 'Database', icon: <Database size={13} />, fields: [
       { key: 'db_uri', label: 'MongoDB URI', type: 'text', fromGlobal: 'mongoUri', placeholder: 'mongodb://192.168.1.102:27017/open5gs', hint: 'Subscriber data store' },
     ]},
-    { section: 'NRF Discovery', icon: <Link size={13} />, fields: [
-      { key: 'nrf_uri', label: 'NRF URI', type: 'text', fromGlobal: 'nrfUri', placeholder: 'http://nrf-svc:7777' },
+    { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
+      { key: 'scp_uri', label: 'SCP URI', type: 'text', fromGlobal: 'scpUri' as any, placeholder: 'http://scp-svc:7777' },
     ]},
   ],
   pcf: [
@@ -86,8 +96,8 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
       { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
-    { section: 'NRF Discovery', icon: <Link size={13} />, fields: [
-      { key: 'nrf_uri', label: 'NRF URI', type: 'text', fromGlobal: 'nrfUri' },
+    { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
+      { key: 'scp_uri', label: 'SCP URI', type: 'text', fromGlobal: 'scpUri' as any },
     ]},
   ],
   nssf: [
@@ -96,9 +106,12 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
     { section: 'Slice Selection', icon: <LayoutGrid size={13} />, fields: [
-      { key: 'sst', label: 'Default SST', type: 'number', fromGlobal: 'sst', width: 'third', hint: 'Slice/Service Type' },
-      { key: 'sd', label: 'Default SD', type: 'text', fromGlobal: 'sd', width: 'third', hint: 'Slice Differentiator (hex)' },
-      { key: 'nrf_uri', label: 'NRF URI', type: 'text', fromGlobal: 'nrfUri' },
+      { key: 'nsi_uri',  label: 'NRF URI (for NSI)', type: 'text', fromGlobal: 'nrfUri', hint: 'NRF endpoint for slice selection' },
+      { key: 'sst',      label: 'Default SST', type: 'number', fromGlobal: 'sst', width: 'third', hint: 'Slice/Service Type' },
+      { key: 'sd',       label: 'Default SD',  type: 'text',   fromGlobal: 'sd',  width: 'third', hint: 'Slice Differentiator (hex)' },
+    ]},
+    { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
+      { key: 'scp_uri',  label: 'SCP URI', type: 'text', fromGlobal: 'scpUri' as any },
     ]},
   ],
   bsf: [
@@ -106,8 +119,8 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
       { key: 'sbi_addr', label: 'Bind Address', type: 'ip', placeholder: '0.0.0.0' },
       { key: 'sbi_port', label: 'Port', type: 'number', placeholder: '7777', width: 'third' },
     ]},
-    { section: 'NRF Discovery', icon: <Link size={13} />, fields: [
-      { key: 'nrf_uri', label: 'NRF URI', type: 'text', fromGlobal: 'nrfUri' },
+    { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
+      { key: 'scp_uri', label: 'SCP URI', type: 'text', fromGlobal: 'scpUri' as any },
     ]},
   ],
   amf: [
@@ -126,7 +139,7 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
     { section: 'SBI Interface', icon: <Network size={13} />, fields: [
       { key: 'sbi_addr', label: 'SBI Bind Address', type: 'ip', placeholder: '0.0.0.0' },
       { key: 'sbi_port', label: 'SBI Port', type: 'number', placeholder: '7777', width: 'third' },
-      { key: 'nrf_uri',  label: 'NRF URI',  type: 'text', fromGlobal: 'nrfUri' },
+      { key: 'scp_uri',  label: 'SCP URI',  type: 'text', fromGlobal: 'scpUri' as any },
     ]},
     { section: 'Security Algorithms', icon: <Shield size={13} />, fields: [
       { key: 'integrity_order', label: 'Integrity (priority order)', type: 'tags', options: ['NIA0','NIA1','NIA2'], hint: 'Drag to reorder — leftmost = highest priority' },
@@ -152,8 +165,8 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
       { key: 'dns_primary',   label: 'Primary DNS',   type: 'ip', placeholder: '8.8.8.8', width: 'half' },
       { key: 'dns_secondary', label: 'Secondary DNS', type: 'ip', placeholder: '8.8.4.4', width: 'half' },
     ]},
-    { section: 'NRF Discovery', icon: <Link size={13} />, fields: [
-      { key: 'nrf_uri', label: 'NRF URI', type: 'text', fromGlobal: 'nrfUri' },
+    { section: 'SCP Proxy', icon: <Link size={13} />, fields: [
+      { key: 'scp_uri', label: 'SCP URI', type: 'text', fromGlobal: 'scpUri' as any },
     ]},
   ],
   upf: [
@@ -169,11 +182,12 @@ const NF_SCHEMAS: Record<string, FieldGroup[]> = {
   ],
 };
 
-const NF_LIST = ['nrf','ausf','udm','udr','pcf','nssf','bsf','amf','smf','upf'];
+const NF_LIST = ['nrf','ausf','udm','udr','pcf','nssf','bsf','amf','smf','upf','scp'];
 
 const DEFAULT_GLOBAL: GlobalConfig = {
   mcc: '605', mnc: '01', tac: 1, sst: 1, sd: '000001',
   nrfUri: 'http://nrf-svc:7777',
+  scpUri: 'http://scp-svc:7777' as any,
   mongoUri: 'mongodb://192.168.1.102:27017/open5gs',
   logLevel: 'info',
   networkName: '5G SA PRIVATE NETWORK',
@@ -181,18 +195,19 @@ const DEFAULT_GLOBAL: GlobalConfig = {
 
 const MOCK_FIELDS: Record<string, Record<string, any>> = {
   nrf:  { sbi_addr:'0.0.0.0', sbi_port:7777, mcc:'001', mnc:'01' },
-  ausf: { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
-  udm:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
-  udr:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777', db_uri:'mongodb://192.168.1.102:27017/open5gs' },
-  pcf:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
-  nssf: { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777', sst:1, sd:'000001' },
-  bsf:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
+  scp:  { sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777' },
+  ausf: { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
+  udm:  { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
+  udr:  { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777', db_uri:'mongodb://192.168.1.102:27017/open5gs' },
+  pcf:  { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
+  nssf: { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777', nsi_uri:'http://nrf-svc:7777', sst:1, sd:'000001' },
+  bsf:  { sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777' },
   amf:  { mcc:'605', mnc:'01', tac:1, sst:1, sd:'000001', network_name:'5G SA PRIVATE NETWORK', amf_name:'open5gs-amf0',
-          ngap_addr:'0.0.0.0', sbi_addr:'0.0.0.0', sbi_port:7777, nrf_uri:'http://nrf-svc:7777',
+          ngap_addr:'0.0.0.0', sbi_addr:'0.0.0.0', sbi_port:7777, scp_uri:'http://scp-svc:7777',
           integrity_order:['NIA2','NIA1','NIA0'], ciphering_order:['NEA0','NEA2','NEA1'], t3512:540 },
   smf:  { sbi_addr:'0.0.0.0', sbi_port:7777, pfcp_addr:'0.0.0.0', upf_addr:'upf-svc',
           ue_subnet:'10.45.0.1/16', dnn:'internet', mtu:1400,
-          dns_primary:'8.8.8.8', dns_secondary:'8.8.4.4', nrf_uri:'http://nrf-svc:7777' },
+          dns_primary:'8.8.8.8', dns_secondary:'8.8.4.4', scp_uri:'http://scp-svc:7777' },
   upf:  { pfcp_addr:'0.0.0.0', gtpu_addr:'0.0.0.0', ue_subnet:'10.45.0.1/16', dnn:'internet', tun_dev:'ogstun' },
 };
 
@@ -418,7 +433,13 @@ function GlobalPanel({
             <label className="block text-xs text-gray-400 mb-1.5">NRF URI</label>
             <input value={config.nrfUri} onChange={e => onChange('nrfUri', e.target.value)}
               className={inp} placeholder="http://nrf-svc:7777" />
-            <p className="text-[10px] text-gray-600 mt-1">All NFs register to this NRF</p>
+            <p className="text-[10px] text-gray-600 mt-1">NRF service endpoint</p>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1.5">SCP URI</label>
+            <input value={(config as any).scpUri} onChange={e => onChange('scpUri' as any, e.target.value)}
+              className={inp} placeholder="http://scp-svc:7777" />
+            <p className="text-[10px] text-gray-600 mt-1">NFs use this as their SBI proxy (Model C)</p>
           </div>
           <div>
             <label className="block text-xs text-gray-400 mb-1.5">MongoDB URI</label>

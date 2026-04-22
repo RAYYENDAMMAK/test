@@ -16,7 +16,7 @@ interface LogLine { text: string; ts: string; color: string; nf?: string; }
 
 const SINCE_OPTS = ['15m','30m','1h','3h','6h','24h'];
 const LEVEL_OPTS = ['all','ERROR','WARN','INFO','DEBUG'];
-const NF_LIST    = ['amf','smf','upf','nrf','ausf','udm','udr','pcf','nssf','bsf'];
+const NF_LIST    = ['amf','smf','upf','nrf','ausf','udm','udr','pcf','nssf','bsf','scp'];
 
 export default function Logs() {
   // Source: 'loki' | 'k8s' | 'detecting'

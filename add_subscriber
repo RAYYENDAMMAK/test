@@ -1,0 +1,43 @@
+To add more subscribers in the future and have them successfully connect through UERANSIM, you need to ensure consistency between the Database and the UE Simulator.
+
+  Here is the step-by-step process:
+
+  1. Add the Subscriber to the Database
+  You have three ways to do this:
+
+   * Option A: Web UI (Recommended)
+      Access the UI at http://192.168.1.102 and go to the Subscribers view. Click "Add Subscriber" and fill in the details.
+   * Option B: Clone via Command Line (Fastest for testing)
+      If you want to add 999700000000004, you can clone an existing working subscriber:
+
+   1     kubectl exec -n open5gs mongodb-0 -- mongosh open5gs --quiet --eval "var sub = db.subscribers.findOne({imsi: '999700000000001'}); delete sub._id; sub.imsi = '999700000000004';
+     db.subscribers.insertOne(sub);"
+
+  2. Required Configuration Values
+  For the subscriber to match your current UERANSIM setup, ensure these values are set correctly:
+   * IMSI: Must follow the pattern 99970000000000X.
+   * Security:
+       * K: 465B5CE8B199B49FAA5F0A2EE238A6BC
+       * OPC: E8ED289DEBA952E4283B54E88E6183CA
+       * AMF: 8000
+   * Slice:
+       * SST: 1
+       * SD: 000001
+
+  3. Update UERANSIM UE Count
+  Once the subscribers are in the database, you need to tell UERANSIM to simulate more UEs:
+   1. Open ueransim-ue/deployment.yaml.
+   2. Update the UE_COUNT environment variable:
+
+   1     - name: UE_COUNT
+   2       value: "4"  # Increase this to your new total
+   3. Apply the change and restart the UEs:
+
+   1     kubectl apply -f ueransim-ue/deployment.yaml
+   2     kubectl rollout restart deployment/ueransim-ue -n open5gs
+
+  Important Notes:
+   * IMSI Sequence: UERANSIM starts from the base IMSI defined in ue-template.yaml (currently 999700000000001) and increments by 1 for each UE. If you set UE_COUNT to 10, you must have
+     subscribers 001 through 010 in the database.
+   * APN: Ensure the APN in the database matches the one in ue-template.yaml (currently internet).
+   * IP Pool: Your current SMF is configured with a 10.45.0.0/16 subnet, which supports thousands of UEs, so you don't need to change the network settings for a long time.

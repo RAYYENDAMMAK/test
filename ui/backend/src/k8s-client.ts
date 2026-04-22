@@ -17,7 +17,7 @@ export const NAMESPACE = process.env.K8S_NAMESPACE || 'open5gs';
 
 export const NF_NAMES = [
   'nrf', 'ausf', 'udm', 'udr', 'pcf',
-  'nssf', 'bsf', 'amf', 'smf', 'upf',
+  'nssf', 'bsf', 'amf', 'smf', 'upf', 'scp',
 ];
 
 export const NF_CONFIG_MAP: Record<string, string> = {
@@ -31,6 +31,7 @@ export const NF_CONFIG_MAP: Record<string, string> = {
   amf: 'amf-config',
   smf: 'smf-config',
   upf: 'upf-config',
+  scp: 'scp-config',
 };
 
 export const NF_CONFIG_KEY: Record<string, string> = {
@@ -44,4 +45,5 @@ export const NF_CONFIG_KEY: Record<string, string> = {
   amf: 'amf.yaml',
   smf: 'smf.yaml',
   upf: 'upf.yaml',
+  scp: 'scp.yaml',
 };

@@ -17,6 +17,7 @@ const GROUP_POSITIONS: Record<string, { x: number; y: number }> = {
   up:     { x: 500, y: 520 },
   dn:     { x: 100, y: 520 },
   db:     { x: 1200, y: 200 },
+  proxy:  { x: 700, y: 180 },
   other:  { x: 700, y: 450 },
 };
 

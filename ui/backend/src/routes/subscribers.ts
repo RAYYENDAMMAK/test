@@ -1,7 +1,28 @@
 import { Router, Request, Response } from 'express';
 import { Subscriber, connectMongo } from '../mongo-client';
+import mongoose from 'mongoose';
 
 const router = Router();
+
+// Helper to format hex strings with spaces every 8 chars
+function formatSecurityKey(key: string | undefined): string | undefined {
+  if (!key) return key;
+  const clean = key.replace(/\s+/g, '');
+  return clean.match(/.{1,8}/g)?.join(' ') || clean;
+}
+
+function processSubscriberData(data: any) {
+  if (data.security) {
+    if (data.security.k) data.security.k = formatSecurityKey(data.security.k);
+    if (data.security.opc) data.security.opc = formatSecurityKey(data.security.opc);
+    if (data.security.op) data.security.op = formatSecurityKey(data.security.op);
+    
+    // Ensure sqn is Int64 (Long)
+    const sqnVal = data.security.sqn || 0;
+    data.security.sqn = mongoose.mongo.Long.fromNumber(Number(sqnVal));
+  }
+  return data;
+}
 
 // Ensure mongo connected
 router.use(async (req, res, next) => {
@@ -43,7 +64,8 @@ router.get('/:imsi', async (req: Request, res: Response) => {
 // POST /api/subscribers
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const sub = new Subscriber(req.body);
+    const data = processSubscriberData({ ...req.body });
+    const sub = new Subscriber(data);
     await sub.save();
     res.status(201).json(sub);
   } catch (err: any) {
@@ -54,9 +76,10 @@ router.post('/', async (req: Request, res: Response) => {
 // PUT /api/subscribers/:imsi
 router.put('/:imsi', async (req: Request, res: Response) => {
   try {
+    const data = processSubscriberData({ ...req.body });
     const sub = await Subscriber.findOneAndUpdate(
       { imsi: req.params.imsi },
-      req.body,
+      data,
       { new: true, runValidators: true }
     );
     if (!sub) return res.status(404).json({ error: 'Subscriber not found' });
@@ -81,7 +104,8 @@ router.delete('/:imsi', async (req: Request, res: Response) => {
 router.post('/bulk', async (req: Request, res: Response) => {
   try {
     const { subscribers } = req.body;
-    const result = await Subscriber.insertMany(subscribers, { ordered: false });
+    const processed = subscribers.map((s: any) => processSubscriberData({ ...s }));
+    const result = await Subscriber.insertMany(processed, { ordered: false });
     res.status(201).json({ inserted: result.length });
   } catch (err: any) {
     res.status(400).json({ error: err.message });

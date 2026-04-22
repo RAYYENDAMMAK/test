@@ -6,7 +6,11 @@ import Card from '../components/Card';
 const DEFAULT_SUB = {
   imsi: '',
   msisdn: [],
-  security: { k: '', opc: '', amf: '8000' },
+  security: { 
+    k: '465B5CE8B199B49FAA5F0A2EE238A6BC', 
+    opc: 'E8ED289DEBA952E4283B54E88E6183CA', 
+    amf: '8000' 
+  },
   ambr: {
     downlink: { value: 1, unit: 3 },
     uplink: { value: 1, unit: 3 },
@@ -194,12 +198,14 @@ export default function Subscribers() {
               <div className="border-t border-gray-800 pt-4">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Security</div>
                 <div className="grid grid-cols-1 gap-3">
-                  <Field label="Ki (128-bit hex)" value="465B5CE8 B199B49F AA5F0A2E E238A6BC"
-                     mono />
-                  <Field label="OPc (128-bit hex)" value="E8ED289D EBA952E4 283B54E8 8E6183CA"
-                     mono />
+                  <Field label="Ki (128-bit hex)" value={formData.security?.k || ''}
+                    onChange={(v: string) => setFormData((f: any) => ({ ...f, security: { ...f.security, k: v } }))}
+                    placeholder="465B5CE8B199B49FAA5F0A2EE238A6BC" mono />
+                  <Field label="OPc (128-bit hex)" value={formData.security?.opc || ''}
+                    onChange={(v: string) => setFormData((f: any) => ({ ...f, security: { ...f.security, opc: v } }))}
+                    placeholder="E8ED289DEBA952E4283B54E88E6183CA" mono />
                   <Field label="AMF" value={formData.security?.amf || '8000'}
-                    onChange={v => setFormData((f: any) => ({ ...f, security: { ...f.security, amf: v } }))}
+                    onChange={(v: string) => setFormData((f: any) => ({ ...f, security: { ...f.security, amf: v } }))}
                     placeholder="8000" mono />
                 </div>
               </div>

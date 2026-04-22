@@ -3,26 +3,26 @@ import { coreV1Api, appsV1Api, NAMESPACE, NF_NAMES } from '../k8s-client';
 
 const router = Router();
 
-// Defines 5G core logical connections
+// Defines 5G core logical connections (Model C: Indirect Communication via SCP)
 const NF_CONNECTIONS = [
-  { from: 'nrf', to: 'ausf', interface: 'SBI' },
-  { from: 'nrf', to: 'udm', interface: 'SBI' },
-  { from: 'nrf', to: 'udr', interface: 'SBI' },
-  { from: 'nrf', to: 'pcf', interface: 'SBI' },
-  { from: 'nrf', to: 'nssf', interface: 'SBI' },
-  { from: 'nrf', to: 'bsf', interface: 'SBI' },
-  { from: 'nrf', to: 'amf', interface: 'SBI' },
-  { from: 'nrf', to: 'smf', interface: 'SBI' },
-  { from: 'ausf', to: 'udm', interface: 'Nausf' },
-  { from: 'udm', to: 'udr', interface: 'Nudm' },
-  { from: 'amf', to: 'smf', interface: 'N11' },
-  { from: 'amf', to: 'ausf', interface: 'N12' },
-  { from: 'amf', to: 'udm', interface: 'N8' },
-  { from: 'amf', to: 'pcf', interface: 'N15' },
-  { from: 'amf', to: 'nssf', interface: 'N22' },
+  // Consumers to SCP
+  { from: 'amf', to: 'scp', interface: 'SBI' },
+  { from: 'smf', to: 'scp', interface: 'SBI' },
+  
+  // SCP to Producers
+  { from: 'scp', to: 'nrf', interface: 'Nnrf' },
+  { from: 'scp', to: 'ausf', interface: 'Nausf' },
+  { from: 'scp', to: 'udm', interface: 'Nudm' },
+  { from: 'scp', to: 'udr', interface: 'Nudr' },
+  { from: 'scp', to: 'pcf', interface: 'Npcf' },
+  { from: 'scp', to: 'nssf', interface: 'Nnssf' },
+  { from: 'scp', to: 'bsf', interface: 'Nbsf' },
+
+  // NSSF direct NSI link to NRF (Slice Selection)
+  { from: 'nssf', to: 'nrf', interface: 'NSI' },
+
+  // Non-SBI / Interface connections
   { from: 'smf', to: 'upf', interface: 'N4/PFCP' },
-  { from: 'smf', to: 'udm', interface: 'N10' },
-  { from: 'smf', to: 'pcf', interface: 'N7' },
   { from: 'upf', to: 'internet', interface: 'N6' },
   { from: 'gnb', to: 'amf', interface: 'N2/NGAP' },
   { from: 'gnb', to: 'upf', interface: 'N3/GTP-U' },
@@ -80,6 +80,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 function getGroup(name: string): string {
   if (['nrf'].includes(name)) return 'core';
+  if (['scp'].includes(name)) return 'proxy';
   if (['ausf', 'udm', 'udr'].includes(name)) return 'auth';
   if (['pcf', 'nssf', 'bsf'].includes(name)) return 'policy';
   if (['amf', 'smf'].includes(name)) return 'cp';
