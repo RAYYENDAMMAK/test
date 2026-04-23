@@ -71,6 +71,7 @@ metadata:
 data:
   daemon-config.json: |
     {
+      "cniVersion": "0.3.1",
       "chrootDir": "/hostroot",
       "confDir": "/host/etc/cni/net.d",
       "logToStderr": true,

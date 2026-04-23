@@ -56,9 +56,13 @@ export const api = {
       apiFetch<any>(`/subscribers?page=${page}&limit=${limit}&search=${search}`),
     get: (imsi: string) => apiFetch<any>(`/subscribers/${imsi}`),
     create: (data: any) => apiFetch('/subscribers', { method: 'POST', body: JSON.stringify(data) }),
+    bulkGenerate: (data: any) =>
+      apiFetch<any>('/subscribers/bulk', { method: 'POST', body: JSON.stringify(data) }),
     update: (imsi: string, data: any) =>
       apiFetch(`/subscribers/${imsi}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (imsi: string) => apiFetch(`/subscribers/${imsi}`, { method: 'DELETE' }),
+    bulkDelete: (imsis: string[]) =>
+      apiFetch<any>('/subscribers/bulk', { method: 'DELETE', body: JSON.stringify({ imsis }) }),
   },
   logs: {
     get: (pod: string, tail = 200) => apiFetch<any>(`/logs/${pod}?tail=${tail}`),

@@ -1,0 +1,55 @@
+The "Not Seen" vs. "Established" status is a Live Connectivity Status, not a static value stored in the database. You cannot change it by simply clicking a toggle; it reflects the actual
+  network reality between the gNB and the AMF.
+
+  Here is how that state is determined and how you can "modify" it:
+
+  1. How the State is Known (Discovery)
+  The system uses a "matching" process performed every time you click Poll SCTP in the UI:
+   1. Backend Scan: The UI backend logs into the AMF Pod and reads the Linux kernel's SCTP table (/proc/net/sctp/assocs). This shows every raw connection currently hitting the AMF.
+   2. Database Lookup: The backend then looks at your Registered gNBs in MongoDB.
+   3. The Match: If the Remote IP found in the AMF's kernel matches the Expected IP you entered in the UI, the status becomes Established.
+   4. Fallback: If a gNB is registered in the DB but its IP isn't found in the AMF's live connection list, it shows as Not Seen.
+
+  2. How to "Modify" the State
+  To change the status in the UI, you have to address the underlying cause:
+
+   * To move from "Not Seen" to "Established":
+       * Check Registration: Ensure the Expected IP in the UI matches the actual IP of the gNB pod (e.g., 10.42.0.77).
+       * Check Pod Status: Ensure the ueransim-gnb-0 pod is "Running".
+       * Check Logs: Look at the gNB logs to see if it says "SCTP connection established". If it does, but the UI still says "Not Seen", it usually means the IP address in the Registry
+         (Database) is incorrect.
+
+   * To move from "Established" to "Not Seen":
+       * Stop the gNB: Deleting or stopping the gNB pod will tear down the SCTP association.
+       * Network Failure: If the connection drops due to a network issue, the AMF kernel will eventually clear the association, and the UI will reflect this as "Not Seen" or "Closed".
+
+  Summary of what I fixed for you:
+  Previously, even if your gNB was connected, it might have shown as "Not Seen" or "Unknown" because:
+   1. The Parser was blind: It was looking at the wrong column in the AMF's table to find the port and IP.
+   2. The Registry was empty: ueransim-gnb-0 wasn't in the database, so the UI didn't know which "Registered gNB" to link the live connection to.
+
+  Now, if you go to the RAN view and click "Poll SCTP", it should correctly match your running pod to the registration I created and show "Established".
+
+the "Disconnected" count in the summary card specifically refers to SCTP associations that are "hanging" or in a failed state.
+
+  In the 5G Core, a connection follows three main phases in the UI:
+
+  1. Established (Green)
+   * What it means: The gNB and AMF have a fully active "handshake." Data and signaling can flow.
+   * How to see it: The summary card will show Connected: 1.
+
+  2. Disconnected (Red)
+   * What it means: There is a "ghost" of a connection in the AMF's memory, but it is not working. This happens if:
+       * The gNB process crashed suddenly.
+       * The connection is stuck in a COOKIE_WAIT or CLOSED state.
+   * Why you see "0": This is actually a good thing! It means you don't have any broken or "zombie" connections clogging up the AMF.
+
+  3. Not Seen (Gray)
+   * What it means: The gNB is registered in your database, but the AMF has absolutely no record of it even trying to connect. 
+   * Where it shows: This doesn't count toward the "Disconnected" total; instead, it appears in the Registered gNBs table at the bottom with a gray icon saying "Not Seen."
+
+  ---
+
+  How to test the "Disconnected" state:
+  If you want to see that indicator change from 0 to 1, you would typically have to simulate a specific type of failure where the socket remains open but the protocol fails. However, in most
+  Kubernetes environments, if you delete the gNB pod, the connection is cleaned up entirely and it will simply move to "Not Seen".

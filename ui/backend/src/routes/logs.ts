@@ -1,17 +1,8 @@
 import { Router, Request, Response } from 'express';
-import * as http from 'http';
-import * as https from 'https';
-import * as fs from 'fs';
+import * as stream from 'stream';
 import { k8sConfig, NAMESPACE } from '../k8s-client';
 import { coreV1Api } from '../k8s-client';
-
-const SA_TOKEN = '/var/run/secrets/kubernetes.io/serviceaccount/token';
-
-function getK8sToken(): string | undefined {
-  // In-cluster (k3s): token is a mounted file, not embedded in kubeconfig
-  if (fs.existsSync(SA_TOKEN)) return fs.readFileSync(SA_TOKEN, 'utf8').trim();
-  return k8sConfig.getCurrentUser()?.token || undefined;
-}
+import { Log } from '@kubernetes/client-node';
 
 const router = Router();
 
@@ -36,6 +27,8 @@ router.get('/:pod/stream', async (req: Request, res: Response) => {
   const { pod } = req.params;
   const container = req.query.container as string | undefined;
 
+  console.log(`[logs] Starting SSE stream for pod ${pod} (namespace: ${NAMESPACE})`);
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -45,51 +38,37 @@ router.get('/:pod/stream', async (req: Request, res: Response) => {
     res.write(`data: ${JSON.stringify({ line: data, ts: new Date().toISOString() })}\n\n`);
   };
 
+  const log = new Log(k8sConfig);
+  const logStream = new stream.PassThrough();
+
+  logStream.on('data', (chunk: Buffer) => {
+    const lines = chunk.toString().split('\n').filter(Boolean);
+    lines.forEach(sendEvent);
+  });
+
+  let k8sReq: any = null;
+
   try {
-    const cluster = k8sConfig.getCurrentCluster();
-    const server = cluster?.server || 'https://kubernetes.default.svc';
-    const token = getK8sToken();
-
-    const params = new URLSearchParams({
-      follow: 'true',
-      tailLines: '50',
-      ...(container ? { container } : {}),
-    });
-
-    const url = new URL(
-      `/api/v1/namespaces/${NAMESPACE}/pods/${pod}/log?${params}`,
-      server
-    );
-
-    const options: https.RequestOptions = {
-      hostname: url.hostname,
-      port: url.port || (url.protocol === 'https:' ? 443 : 80),
-      path: url.pathname + url.search,
-      method: 'GET',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      rejectUnauthorized: false,
-    };
-
-    const proto = url.protocol === 'https:' ? https : http;
-    const k8sReq = proto.request(options, (k8sRes) => {
-      k8sRes.on('data', (chunk: Buffer) => {
-        const lines = chunk.toString().split('\n').filter(Boolean);
-        lines.forEach(sendEvent);
-      });
-      k8sRes.on('end', () => res.end());
-    });
-
-    k8sReq.on('error', (err) => {
-      sendEvent(`[ERROR] ${err.message}`);
+    k8sReq = await log.log(NAMESPACE, pod, container || '', logStream, (err) => {
+      if (err) {
+        console.error(`[logs] Log stream error for ${pod}:`, err.message);
+        sendEvent(`[ERROR] ${err.message}`);
+      }
       res.end();
+    }, {
+      follow: true,
+      tailLines: 50,
+      timestamps: false,
     });
-
-    k8sReq.end();
 
     req.on('close', () => {
-      k8sReq.destroy();
+      console.log(`[logs] Client closed connection for ${pod}`);
+      if (k8sReq && typeof k8sReq.abort === 'function') k8sReq.abort();
+      if (k8sReq && typeof k8sReq.destroy === 'function') k8sReq.destroy();
+      logStream.destroy();
     });
   } catch (err: any) {
+    console.error(`[logs] Failed to start log stream for ${pod}:`, err);
     sendEvent(`[ERROR] ${err.message}`);
     res.end();
   }

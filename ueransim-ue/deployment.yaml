@@ -20,7 +20,7 @@ spec:
           command: ["/bin/sh", "/etc/ueransim/run-ue.sh"]
           env:
             - name: UE_COUNT
-              value: "4"
+              value: "128"
             - name: POD_IP
               valueFrom:
                 fieldRef:

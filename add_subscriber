@@ -33,8 +33,8 @@ To add more subscribers in the future and have them successfully connect through
    2       value: "4"  # Increase this to your new total
    3. Apply the change and restart the UEs:
 
-   1     kubectl apply -f ueransim-ue/deployment.yaml
-   2     kubectl rollout restart deployment/ueransim-ue -n open5gs
+   1     sudo kubectl apply -f ueransim-ue/deployment.yaml
+   2     sudo kubectl rollout restart deployment/ueransim-ue -n open5gs
 
   Important Notes:
    * IMSI Sequence: UERANSIM starts from the base IMSI defined in ue-template.yaml (currently 999700000000001) and increments by 1 for each UE. If you set UE_COUNT to 10, you must have
