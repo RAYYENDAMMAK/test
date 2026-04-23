@@ -122,7 +122,9 @@ async function pollAmfSctp(): Promise<SctpAssoc[]> {
     console.log('[gnbs] /proc/net/sctp output:', output);
 
     const sstMap: Record<number, string> = {
-      4: 'ESTABLISHED',
+      3: 'ESTABLISHED', // ST=3 is often ESTABLISHED in some kernels
+      4: 'ESTABLISHED', // SST=4 is ESTABLISHED in others
+      1: 'ESTABLISHED', // In this environment SST=1 and ST=3 seems to be ESTABLISHED
       7: 'CLOSED',
       5: 'COOKIE_ECHOED',
       6: 'COOKIE_WAIT',
@@ -135,37 +137,47 @@ async function pollAmfSctp(): Promise<SctpAssoc[]> {
       if (!line) continue;
 
       const cols = line.split(/\s+/);
-      // col indices (0-based): 0=ASSOC, 1=sk, 2=sty, 3=sst, 4=tx_queue, 5=rx_queue,
-      // 6=uid, 7=inode, 8=lport, 9=rport, 10=laddrs, <->, raddrs, ..., assoc-id
+      // col indices (0-based): 0=ASSOC, 1=sk, 2=sty, 3=sst, 4=st, 5=hbkt, 6=assoc-id,
+      // 7=tx_queue, 8=rx_queue, 9=uid, 10=inode, 11=lport, 12=rport, 13=laddrs, 14=<->, 15=raddrs
 
-      if (cols.length < 12) {
+      if (cols.length < 13) {
         console.log('[gnbs] Skipping line (not enough columns):', line);
         continue;
       }
 
-      const lport = cols[8];
+      const lport = cols[11];
       // Try both decimal and hex parsing for port
-      const lportNum = parseInt(lport, 16) || parseInt(lport, 10);
+      const lportNum = parseInt(lport, 10) || parseInt(lport, 16);
       console.log('[gnbs] Checking line, lport:', lport, 'parsed as:', lportNum);
 
       if (lportNum !== 38412) continue; // On ne s'intéresse qu'aux associations SCTP sur le port 38412 (AMF)
 
-      const sstInt = parseInt(cols[3], 16) || parseInt(cols[3], 10);
-      const sctpState = sstMap[sstInt] || 'UNKNOWN';
-      const rport = parseInt(cols[9], 16) || parseInt(cols[9], 10);
-      const localAddr = cols[10];
+      const sstInt = parseInt(cols[3], 10);
+      const stInt = parseInt(cols[4], 10);
+      
+      // If either SST or ST indicates established, we use it.
+      let sctpState = sstMap[sstInt] || sstMap[stInt] || 'UNKNOWN';
+      
+      const rport = parseInt(cols[12], 10) || parseInt(cols[12], 16);
+      const localAddr = cols[13];
 
-      console.log('[gnbs] Found matching SCTP association:', { sctpState, rport, localAddr });
+      console.log('[gnbs] Found matching SCTP association:', { sctpState, rport, localAddr, sstInt, stInt });
 
       // Everything after '<->' up to the last numeric token is raddrs
       const arrowIdx = cols.indexOf('<->');
       let remoteIP = '';
       let assocId = '';
       if (arrowIdx !== -1 && arrowIdx + 1 < cols.length) {
-        // raddrs follows '<->'; last column is assoc-id
-        assocId = cols[cols.length - 1];
-        // raddrs are between arrowIdx+1 and cols.length-2
-        remoteIP = cols.slice(arrowIdx + 1, cols.length - 1).join(' ').trim();
+        // Find where the last column (assoc-id) is. 
+        // Wait, index 6 is also assoc-id according to some headers.
+        // Let's use index 6 if it looks like a number.
+        assocId = cols[6];
+        
+        // raddrs follows '<->'
+        // In some versions it's multiple addresses.
+        remoteIP = cols[arrowIdx + 1];
+        // Strip '*' prefix if present
+        remoteIP = remoteIP.replace(/^\*/, '');
         // Strip port suffix like ':5000' if present
         remoteIP = remoteIP.replace(/:\d+$/, '').trim();
       }
